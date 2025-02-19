@@ -18,6 +18,8 @@ book:
     - 08_utility.qmd
     - 09_buyout.qmd
     - 10_references.qmd
+  sidebar:
+    logo: 'ps_logo.png'
   repo-url: https://github.com/pristine-seas/prj-Cyprus-trawling
 
 format:

@@ -98,6 +98,20 @@ annual_total_landings_and_discards <- sau_df |>
                         discards_tons = sum(discards_tons, na.rm = T))|> 
               mutate(source = "MBS")) |> 
   select(source, everything())
+
+
+avgs_df <- landings_and_discards |> 
+  filter(year > 2015) |> 
+  group_by(year) |> 
+  summarise(landings_tons = sum(landings_tons), 
+            discards_tons = sum(discards_tons),
+            .groups = "drop") |>
+  summarise(avg_landings = mean(landings_tons),
+            sd_landings = sd(landings_tons),
+            avg_discards = mean(discards_tons),
+            sd_discards = sd(discards_tons)) |> 
+  mutate(across(contains("avg"), ~round(., 2)),
+         across(contains("sd"), ~round(., 2)))
 ```
 
 Total fish landings in the bottom trawl fishery have declined significantly since their peak in 2006, when they exceeded 200 tons. In recent years, landings have remained below 50 tons, with moderate year-to-year fluctuations. Between 2016 and 2022, annual landings averaged 76 tons (SD ≈ 14), reaching a low of 50 tons in 2020 before showing partial recovery. Overall, the data indicate a sustained decline in landings compared to earlier peak levels (@fig-landings-ts).

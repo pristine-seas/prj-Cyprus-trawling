@@ -55,11 +55,13 @@ effort_summary <-  read_csv(file.path(prj_path, "data/processed/effort_summary.c
 emissions_summary <-  read_csv(file.path(prj_path, "data/processed/emissions_summary.csv"))
 protein_value <- read_csv(file.path(prj_path, "data/processed/protein_summary.csv"))
 employment_value <- read_csv(file.path(prj_path, "data/processed/employment_summary.csv"))
+discards_value <- read_csv(file.path(prj_path, "data/processed/discarded_value_summary.csv"))
 
 master_summary <- econ_summary |> 
   left_join(effort_summary) |> 
   left_join(emissions_summary) |> 
   left_join(employment_value) |> 
+  left_join(discards_value) |> 
   left_join(protein_value |> 
               select(year, protein_value)) |> 
   mutate(CO2_fuel_euro = tCO2_fuel*SCC,
@@ -67,7 +69,7 @@ master_summary <- econ_summary |>
          private_utility = profits,
          public_utility = protein_value + employment_value_euro - CO2_fuel_euro - CO2_sediment_euro) |> 
   select(year, revenue, total_crew_wage, total_energy_cost, total_repair_cost, total_variable_cost, total_non_variable_cost, total_depreciation_cost,
-         CO2_fuel_euro, CO2_sediment_euro, employment_value_euro, protein_value, private_utility, public_utility) 
+         CO2_fuel_euro, CO2_sediment_euro, employment_value_euro, protein_value, discards_value, private_utility, public_utility) 
 
 avgs_summary <- master_summary |> 
   pivot_longer(-year) |> 
@@ -84,16 +86,16 @@ avgs_summary <- master_summary |>
 #| 
 tmp <- avgs_summary |> 
   rename("variable" = name) |>
-  mutate(mean = if_else(variable %in% c("CO2_fuel_euro", "CO2_sediment_euro") |
+  mutate(mean = if_else(variable %in% c("CO2_fuel_euro", "CO2_sediment_euro", "discarded_value") |
                           str_detect(variable, "cost|wage"), mean*-1, mean)) |> 
-  filter(str_detect(variable, "revenue|cost|wage|protein|employment|fuel|prof|util|CO")) |> 
-  mutate(variable = fct_relevel(as.factor(str_to_sentence(str_replace_all(str_remove_all(variable, "total_|_euro"), "_", " "))),
+  filter(str_detect(variable, "revenue|cost|wage|protein|employment|fuel|prof|util|CO|discards")) |> 
+  mutate(variable = fct_relevel(as.factor(str_to_sentence(str_replace_all(str_remove_all(variable, "total_|_euro|_value"), "_", " "))),
                                 "Revenue", "Energy cost", "Depreciation cost", "Crew wage", "Repair cost",
-                                "Variable cost", "Non variable cost", "Protein value", "Employment value", "Co2 fuel", "Co2 sediment"))
+                                "Variable cost", "Non variable cost", "Protein", "Employment", "Discards","Co2 fuel", "Co2 sediment"))
 
 tmp |> 
   mutate(group = case_when(str_detect(variable, "utility") ~ "Net",
-                           str_detect(variable, "Co2|Employment|Protein") ~ "Public",
+                           str_detect(variable, "Co2|Employment|Protein|Discards") ~ "Public",
                            TRUE ~ "Private") ,
          group = factor(group, levels = c("Private", "Public", "Net"))) |>
   ggplot(aes(x = variable, y = mean, group = variable))+
@@ -116,6 +118,7 @@ tmp |>
                                "#FFA500",  # Orange
                                "#0075A2",
                                "lightblue",
+                                "#FF6347",
                                "#FF6347",
                                "#B22222",
                                "#FF6347",
