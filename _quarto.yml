@@ -4,8 +4,12 @@ project:
 
 book:
   title: "Comprehensive Costs and Benefits of Industrial Bottom Trawling in Cyprus"
-  author: "Juan S. Mayorga-Henao"
-  date: "2024"
+  author: 
+    - name: "Juan S. Mayorga-Henao"
+    - email: marine.data.science@ngs.org
+    - affiliation: "National Geographic Society, Pristine Seas"
+    - degrees: MsSc
+  date: last-modified
   chapters:
     - index.qmd   # Introduction
     - 01_fleet_and_effort.qmd
