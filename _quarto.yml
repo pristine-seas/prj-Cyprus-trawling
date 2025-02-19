@@ -1,5 +1,6 @@
 project:
   type: book
+  output-dir: docs
 
 book:
   title: "Comprehensive Costs and Benefits of Industrial Bottom Trawling in Cyprus"
@@ -17,6 +18,7 @@ book:
     - 08_utility.qmd
     - 09_buyout.qmd
     - 10_references.qmd
+  repo-url: https://github.com/pristine-seas/prj-Cyprus-trawling
 
 format:
   html:
