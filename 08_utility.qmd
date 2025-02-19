@@ -1,0 +1,132 @@
+---
+title: "Public vs. private utility"
+format: 
+  html:
+    theme: lux
+    toc: true
+    toc-location: right
+    page-layout: full
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+```
+
+The economic impact of bottom trawling extends beyond private financial returns, incorporating both public benefits and societal costs. While the industry is often evaluated based on profitability, a more comprehensive assessment considers its broader contributions to society and its environmental footprint.
+
+From a private utility perspective, the fishery’s value lies in profits, which fluctuate with market conditions, operating costs, and regulations. In contrast, its public utility is more complex, balancing positive contributions, such as employment and food security, against negative externalities, including bycatch (not assessed here), discards, and CO₂ emissions. While the fishery supports jobs and provides protein, it also depletes marine resources and contributes to climate change through both fuel combustion and sediment disturbance, which releases stored carbon into the ocean.
+
+On average, private utility was negative (-12,000 EUR per year, SD: 118,000 EUR), indicating that fishing costs generally exceeded revenue despite year-to-year variability (@fig-utility). High energy expenses, depreciation, and crew wages were the primary cost drivers. Even as fishing effort declined in recent years, fuel and repair costs remained high, sustaining negative net profits.
+
+```{r}
+SCC <- 50 # 50 Euro 
+
+econ_summary <-  read_csv(file.path(prj_path, "data/processed/econ_summary.csv"))
+effort_summary <-  read_csv(file.path(prj_path, "data/processed/effort_summary.csv"))
+emissions_summary <-  read_csv(file.path(prj_path, "data/processed/emissions_summary.csv"))
+protein_value <- read_csv(file.path(prj_path, "data/processed/protein_summary.csv"))
+employment_value <- read_csv(file.path(prj_path, "data/processed/employment_summary.csv"))
+
+master_summary <- econ_summary |> 
+  left_join(effort_summary) |> 
+  left_join(emissions_summary) |> 
+  left_join(employment_value) |> 
+  left_join(protein_value |> 
+              select(year, protein_value)) |> 
+  mutate(CO2_fuel_euro = tCO2_fuel*SCC,
+         CO2_sediment_euro = tCO2_sediment*SCC,
+         private_utility = profits,
+         public_utility = protein_value + employment_value_euro - CO2_fuel_euro - CO2_sediment_euro) |> 
+  select(year, revenue, total_crew_wage, total_energy_cost, total_repair_cost, total_variable_cost, total_non_variable_cost, total_depreciation_cost,
+         CO2_fuel_euro, CO2_sediment_euro, employment_value_euro, protein_value, private_utility, public_utility) 
+
+avgs_summary <- master_summary |> 
+  pivot_longer(-year) |> 
+  group_by(name) |>
+  summarise(mean = mean(value, na.rm = T), 
+            sd = sd(value, na.rm = T)) 
+```
+
+```{r}
+#| label: fig-utility
+#| fig-cap: "Public and Private Utility from Bottom Trawling"
+#| fig-width: 10
+#| fig-height: 6
+#| 
+tmp <- avgs_summary |> 
+  rename("variable" = name) |>
+  mutate(mean = if_else(variable %in% c("CO2_fuel_euro", "CO2_sediment_euro") |
+                          str_detect(variable, "cost|wage"), mean*-1, mean)) |> 
+  filter(str_detect(variable, "revenue|cost|wage|protein|employment|fuel|prof|util|CO")) |> 
+  mutate(variable = fct_relevel(as.factor(str_to_sentence(str_replace_all(str_remove_all(variable, "total_|_euro"), "_", " "))),
+                                "Revenue", "Energy cost", "Depreciation cost", "Crew wage", "Repair cost",
+                                "Variable cost", "Non variable cost", "Protein value", "Employment value", "Co2 fuel", "Co2 sediment"))
+
+tmp |> 
+  mutate(group = case_when(str_detect(variable, "utility") ~ "Net",
+                           str_detect(variable, "Co2|Employment|Protein") ~ "Public",
+                           TRUE ~ "Private") ,
+         group = factor(group, levels = c("Private", "Public", "Net"))) |>
+  ggplot(aes(x = variable, y = mean, group = variable))+
+  geom_col(aes(fill = variable), position = "dodge", show.legend = F)+
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd),
+                width = 0.2, color = "black",  show.legend = F)+
+  labs(title = "Public and Private Utility from Bottom Trawling",
+       subtitle = "Annual average estimates of benefits and costs between 2016 - 2022",
+       x = "",
+       y = "Amount (€)") +
+  facet_wrap(~group, scales = "free_x")+
+  scale_y_continuous(labels = scales::comma) +
+  theme_custom()+
+  scale_fill_manual(values = c("#0075A2",  # Bright Blue
+                               "#B22222",  # Firebrick (Deep Red)
+                               "#DC143C",  # Crimson (Bright Red)
+                               "#FF4500",  # Orange-Red
+                               "#FF6347",  # Tomato (Red-Orange)
+                               "#FF8C00",  # Dark Orange
+                               "#FFA500",  # Orange
+                               "#0075A2",
+                               "lightblue",
+                               "#FF6347",
+                               "#B22222",
+                               "#FF6347",
+                               "#B22222"
+                               ) )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+The public utility of bottom trawling showed even larger negative values, as external costs—primarily CO₂ emissions—far outweighed societal benefits such as employment and protein provision. While the fishery contributed an estimated 214 EUR per year (SD: 39,000 EUR) in protein value and 186,000 EUR per year (SD: 43,000 EUR) in employment, these gains were dwarfed by the climate costs of CO₂ emissions (@fig-utility).
+
+Using a conservative social cost of carbon (50 EUR per ton of CO₂), emissions from fuel combustion alone imposed an average annual cost of 34,600 EUR (SD: 11,700 EUR). However, the most significant climate impact came from sediment disturbance, generating an estimated annual carbon cost of 2.5 million EUR (SD: 1.1 million EUR) (@fig-utility). This staggering figure underscores the hidden environmental burden of bottom trawling, reinforcing the need to account for both private profitability and the broader social and ecological costs of this fishing practice.
+
+

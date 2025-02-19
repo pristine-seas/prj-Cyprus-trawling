@@ -1,0 +1,239 @@
+---
+title: "Landings and discards"
+format: 
+  html:
+    toc: true
+    theme: lux
+    toc-location: right
+    page-layout: full
+    fig-cap-location: bottom
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+
+# Connect to BigQuery
+
+# library(bigrquery)
+# library(connections)
+# 
+# ps_BQ_conn <- connection_open(bigquery(),
+#                               project = "pristine-seas",
+#                               dataset = "GFW",
+#                               billing = "pristine-seas",      
+#                               use_legacy_sql = FALSE,
+#                               allowLargeResults = TRUE)
+```
+
+## Landings
+
+```{r}
+mbs_data <- read_csv(file.path(prj_path, "data/raw/MBS/MBS_FisheriesCatchdata(atage) _exported_data.csv"))
+  
+landings_and_discards <- mbs_data |> 
+  filter(landings >= 0, discards >= 0, year > 2005) |> 
+  group_by(year, species) |> 
+  summarize(landings_tons = sum(landings, na.rm = T),
+            discards_tons = sum(discards, na.rm = T))
+
+## SAU data 
+sau_data <- read_csv(file.path(prj_path, "data/raw/SAU EEZ 198 v50/SAU EEZ 198 v50-1.csv")) |> 
+  filter(gear_type == "bottom trawl", year > 2005)
+
+sau_landings <- sau_data |> 
+  filter(catch_type == "Landings") |> 
+  group_by(year, scientific_name, common_name) |> 
+  summarise(landings_tons = sum(tonnes, na.rm = T),
+            .groups = "drop") 
+
+sau_discards <- sau_data |> 
+  filter(catch_type == "Discards") |> 
+  group_by(year, scientific_name, common_name) |> 
+  summarise(discards_tons = sum(tonnes, na.rm = T),
+            .groups = "drop") 
+
+sau_df <- sau_discards |> 
+  full_join(sau_landings) |> 
+  replace_na(list(discards_tons = 0, landings_tons = 0)) 
+
+######## Combine and summarize
+
+annual_total_landings_and_discards <- sau_df |> 
+  group_by(year) |> 
+  summarize(landings_tons = sum(landings_tons, na.rm = T), 
+            discards_tons = sum(discards_tons, na.rm = T)) |> 
+  mutate(source = "SAU") |> 
+  bind_rows(landings_and_discards |> 
+              group_by(year) |> 
+              summarize(landings_tons = sum(landings_tons, na.rm = T), 
+                        discards_tons = sum(discards_tons, na.rm = T))|> 
+              mutate(source = "MBS")) |> 
+  select(source, everything())
+```
+
+Total fish landings in the bottom trawl fishery have declined significantly since their peak in 2006, when they exceeded 200 tons. In recent years, landings have remained below 50 tons, with moderate year-to-year fluctuations. Between 2016 and 2022, annual landings averaged 76 tons (SD ≈ 14), reaching a low of 50 tons in 2020 before showing partial recovery. Overall, the data indicate a sustained decline in landings compared to earlier peak levels (@fig-landings-ts).
+
+However, reconstructed catch estimates suggest that total removals from the bottom trawl fishery are substantially higher than official landings data indicate. The reconstructed average annual catch for the entire fleet was estimated at 384 tons—more than five times the reported landings for the same period [@SeaAroundUs]. This discrepancy highlights potential under-reporting or other factors affecting the accuracy of official landings records.
+ 
+```{r}
+#| label: fig-landings-ts
+#| fig-cap: "Total annual fish catch in the bottom trawl fishery since 2006 based on official and reconstructed catch data"
+#| fig-width: 10
+#| fig-height: 6
+#| 
+annual_total_landings_and_discards |> 
+  ggplot()+
+  geom_line(aes(year, landings_tons, col = source))+
+  geom_point(aes(year, landings_tons, col = source))+
+  labs(y = "Total landings (tons)", 
+       x = "", title = "Total Fish Catch fom Bottom Trawling", 
+       caption = "Reconstructed catch data from Sea Around Us project",
+       subtitle = "Annual trends since 2006 based on official and reconstructed catch data")+
+  scale_x_continuous(breaks = seq(2006, 2022))+
+  theme_custom()+
+  scale_color_manual(values = c("MBS" = "#2274A5", "SAU" = "#FFA9E7"), 
+                     labels = c("MBS" = "Official", "SAU" = "Reconstructed"))
+
+ggsave(file.path(prj_path, "figures", "MBS_landings_since_2006.png"), height  = 8, width = 10)
+```
+
+```{r}
+species_lut <- readxl::read_xlsx(file.path(prj_path, "data/raw/MBS/species_lut.xlsx")) |> 
+  janitor::clean_names()
+  
+landing_by_year_and_species <- landings_and_discards |> 
+  group_by(year, species) |> 
+  summarize(landings_tons = sum(landings_tons), 
+            discards_tons = sum(discards_tons)) |> 
+  ungroup() |> 
+  complete(year, nesting(species), fill = list(landings_tons = 0, discards_tons = 0)) |>
+  left_join(species_lut, by = c("species" = "species_code")) |> 
+  select(year, sp_code = species, common_name, scientific_name, landings_tons, discards_tons)
+
+avg_landing_by_species <- landing_by_year_and_species |> 
+  group_by(sp_code, scientific_name, common_name) |> 
+  summarize(landings_tons = mean(landings_tons)) |> 
+  arrange(desc(landings_tons)) 
+```
+
+Based on official data, the bottom trawl fishery is dominated by Picarei (*Spicara smaris*), which accounts for over 52 tons annually, far surpassing any other species. A secondary group contributes moderate landings, including Red mullet (*Mullus barbatus*) and Bogue (*Boops boops*), both around 11.5 tons, followed by European squid (*Loligo vulgaris*, 5.8 tons), Common Pandora (*Pagellus erythrinus*, 4.9 tons), and Axillary seabream (*Pagellus acarne*, 4.0 tons)(@fig-landings-by-sp-ts). 
+
+Smaller contributions come from Common octopus (*Octopus vulgaris*, 2.4 tons) and Striped red mullet (*Mullus surmuletus*, 2.1 tons). Most other species land less than 1 ton per year, with European hake (*Merluccius merluccius*, 0.97 tons) and Giant red shrimp (*Aristaeomorpha foliacea*, 0.18 tons) among the more notable. Overall, Picarei dominates the fishery, while a handful of other species contribute moderate or minor but steady landings (@fig-landings-by-sp-ts).
+
+```{r}
+#| label: fig-landings-by-sp-ts
+#| fig-cap: "Total annual fish catch by taxa in the bottom trawl fishery since 2006"
+#| fig-width: 10
+#| fig-height: 6
+
+top_10_species <- avg_landing_by_species |> 
+  head(9)
+
+landing_by_year_and_species |> 
+  filter(landings_tons > 0, year > 2015) |> 
+  mutate(label = if_else(sp_code %in% top_10_species$sp_code, common_name, "Other")) |> 
+  ggplot()+
+  geom_area(aes(year, landings_tons, fill = fct_reorder(label, landings_tons)))+
+  labs(fill = "", x = "", y = "Total landings (tons)")+
+  theme_custom()+
+  labs(y = "Total landing (tons)", x = "", title = "Total Landings by Species", subtitle = "Annual trends (2016 - 2022)",
+       caption = "source: EU Joint Research Centre")+
+  scale_x_continuous(breaks = seq(2006, 2022))+
+  paletteer::scale_fill_paletteer_d("basetheme::deepblue")+
+  theme(legend.position = c(0.7, 0.92))+
+  guides(fill = guide_legend(ncol = 2))
+
+ggsave(file.path(prj_path, "figures", "MBS_landings_by_species_post_2015.png"), height = 8, width = 12)
+```
+
+## Discards 
+
+On average, the total annual discards since 2016 across all species amount to approximately 1.67 tons per year, reflecting the overall scale of non-retained catch in the bottom trawl fishery (fig-discards-ts, @fig-discards-by-sp-ts). However, reconstructed data suggests this value can be as high as 245 tons per year (@fig-discards-ts) [@SeaAroundUs]. This discrepancy highlights the substantial difference between official and reconstructed catch data, indicating that discards may be a significant component of the fishery that is not fully captured in official records.
+
+```{r}
+#| label: fig-discards-ts
+#| fig-cap: "Total annual discards by taxa in the bottom trawl fishery since 2006"
+#| fig-width: 8
+#| fig-height: 4
+#| 
+annual_total_landings_and_discards |> 
+  #filter(year > 2015) |> 
+  ggplot()+
+  geom_line(aes(year, discards_tons, col = source))+
+  geom_point(aes(year, discards_tons, col = source))+
+  labs(y = "Total discards (tons)", 
+       x = "", title = "Total Discarded Catch fom Bottom Trawling", 
+       caption = "Reconstructed discards data from Sea Around Us project",
+       subtitle = "Annual trends since 2006 based on official and reconstructed catch data")+
+  scale_x_continuous(breaks = seq(2006, 2022))+
+  theme_custom()+
+  scale_color_manual(values = c("MBS" = "#2274A5", "SAU" = "#FFA9E7"), 
+                     labels = c("MBS" = "Official", "SAU" = "Reconstructed"))
+```
+
+Picarei (*Spicara smaris*) dominates discards in the bottom trawl fishery, with a total of 34.6 tons across all years, averaging 2.5 tons per year—far exceeding any other species. This aligns with its prominence in landings, suggesting it is both highly targeted and frequently discarded, likely due to market preferences or selectivity issues. Common Pandora (*Pagellus erythrinus*) follows at a distant second, with 5.3 tons total and 0.4 tons annually, while Bogue (*Boops boops*), Spotted flounder (*Citharus linguatula*), and Red mullet (*Mullus barbatus*) contribute between 1.2 and 2.4 tons total, averaging 0.1 to 0.3 tons per year. A notable shift is seen in Spotted flounder, which had relatively high discard levels before 2018, peaking at 1 ton in 2016, but are almost absent afterward. This suggests potential shift in stock dynamics affecting its presence in catches (@fig-discards-by-sp-ts). 
+
+```{r}
+#| label: fig-discards-by-sp-ts
+#| fig-cap: "Total annual discards by taxa in the bottom trawl fishery since 2006"
+#| fig-width: 8
+#| fig-height: 4
+
+discards_by_species <- landing_by_year_and_species |> 
+  group_by(sp_code, scientific_name, common_name) |> 
+  summarize(discards_tons = mean(discards_tons)) |> 
+  arrange(desc(discards_tons)) 
+
+top_10_discards <- discards_by_species |> 
+  head(9) 
+
+landing_by_year_and_species |> 
+  filter(discards_tons > 0, year > 2015) |> 
+  mutate(label = if_else(sp_code %in% top_10_discards$sp_code, common_name, "Other")) |> 
+  ggplot()+
+  geom_col(aes(year, discards_tons, fill = fct_reorder(label, discards_tons)))+
+  labs(fill = "", x = "", y = "Total discards (tons)", title = "Total Discards by Species", 
+       subtitle = "Annual trends (2016 - 2022)",
+       caption = "source: EU Joint Research Centre")+
+  theme_custom()+
+  theme(legend.position = c(0.7, 0.8))+
+  scale_x_continuous(breaks = seq(2006, 2022))+
+  guides(fill = guide_legend(ncol = 2))+
+  paletteer::scale_fill_paletteer_d("basetheme::brutal")
+
+ggsave(file.path(prj_path, "figures", "discards_by_species_post_2015.png"), height = 8, width = 12)
+```
+
+```{r}
+annual_total_landings_and_discards |> 
+  write_csv(file.path(prj_path, "data/processed/landings_and_discards_summary.csv"))
+```

@@ -1,0 +1,64 @@
+---
+title: "Phasing Out Bottom Trawling"
+format: 
+  html:
+    theme: lux
+    toc: true
+    toc-location: right
+    page-layout: full
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+
+# Connect to BigQuery
+
+# library(bigrquery)
+# library(connections)
+# 
+# ps_BQ_conn <- connection_open(bigquery(),
+#                               project = "pristine-seas",
+#                               dataset = "GFW",
+#                               billing = "pristine-seas",      
+#                               use_legacy_sql = FALSE,
+#                               allowLargeResults = TRUE)
+```
+
+Given the persistent negative profitability of the bottom trawl fishery and its substantial environmental costs, a complete ban on trawling is a policy option that warrants serious consideration. A well-structured vessel buyout program could facilitate an orderly transition, ensuring a just and economically viable exit strategy for fishers while delivering long-term ecological and societal benefits.
+
+With consistent financial losses, minimal employment benefits, and an annual carbon footprint exceeding 2.5 million EUR, bottom trawling imposes far greater costs on society than the value it provides. A government-funded buyout program, paired with alternative employment pathways, would enable a phased and fair transition away from this destructive fishing practice, ensuring that affected fishers are not left behind.
+
+Vessel buyouts, in which fishers are compensated to permanently remove their boats from the fishery, have been successfully implemented worldwide to reduce overcapacity, restore fish stocks, and mitigate economic hardship. Following the collapse of Atlantic cod stocks in Canada in the 1990s, a CAD 1.9 billion buyout program helped restructure the industry and alleviate economic distress [@Schrank2005]. In the U.S., a $100 million buyout in the Pacific groundfish fishery led to improved economic conditions for remaining fishers while reducing pressure on depleted stocks [@PFMC2004]. Similarly, Australia’s Northern Prawn Fishery implemented a voluntary buyout program, resulting in both economic and ecological improvements [@Vieira2010].
+
+Given that the fleet operates at a net loss, the NPV of future operations is negative, and the external costs of trawling are substantial, the compensation value per vessel should be primarily based on market value, adjusted to account for economic hardship and alternative employment opportunities. A reasonable buyout offer would be calculated as market value (estimated using recent sales data, adjusted for depreciation) minus future losses avoided, ensuring a cost-effective transition for the government while providing fair compensation for vessel owners.
+
+If additional funds are available, the buyout package should also include support for fishers to transition into alternative livelihoods, such as sustainable fisheries, aquaculture, or maritime tourism, helping to minimize economic displacement and foster long-term employment stability. By implementing a well-designed buyout program, policymakers can ensure that the phase-out of bottom trawling is both economically feasible and socially responsible, paving the way for a more sustainable and equitable fishing sector

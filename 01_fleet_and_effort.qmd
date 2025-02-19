@@ -1,0 +1,863 @@
+---
+title: "Fleet & effort"
+format: 
+  html:
+    toc: true
+    theme: lux
+    toc-location: right
+    page-layout: full
+    fig-cap-location: bottom
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+
+# Connect to BigQuery
+
+# library(bigrquery)
+# library(connections)
+# 
+# ps_BQ_conn <- connection_open(bigquery(),
+#                               project = "pristine-seas",
+#                               dataset = "GFW",
+#                               billing = "pristine-seas",      
+#                               use_legacy_sql = FALSE,
+#                               allowLargeResults = TRUE)
+```
+
+```{r eez_layers}
+# Load 
+EEZs <- vect(file.path(ps_science_path, 
+                             "projects/prj-MPAs-to-30x30/data/processed", 
+                             "world_EEZs.gpkg")) 
+
+land <- vect(file.path(ps_science_path, 
+                             "projects/prj-MPAs-to-30x30/data/processed", 
+                             "land.gpkg"))
+
+territorial_seas <- vect(file.path(ps_science_path, 
+                              "projects/prj-MPAs-to-30x30/data/processed", 
+                              "world_territorial_waters.gpkg"))
+
+CYP_eez <- subset(EEZs, 
+                  EEZs$mrgid == "8376") |> 
+  project("EPSG:4326")
+
+area_eez <- terra::expanse(CYP_eez)/10^6
+
+CYP_12nm <- subset(territorial_seas, 
+                   territorial_seas$mrgid == "8376") |> 
+  project("EPSG:4326")
+
+area_12nm <- terra::expanse(CYP_12nm)/10^6
+
+CYP_land <- land |> 
+  project("EPSG:4326") |> 
+  terra::intersect(ext(CYP_12nm))
+
+
+calculate_cell_area <- function(lat, res = 0.01) {
+  
+  # Constants
+  earth_km_per_degree <- 111.32  # Approximate km per degree at the equator
+  
+  # Convert latitude to radians
+  lat_rad <- lat * pi / 180  
+  
+  # Compute grid cell width (longitude distance) and height (latitude distance)
+  lon_length <- res * earth_km_per_degree * cos(lat_rad)  # Longitude spacing in km
+  lat_length <- res * earth_km_per_degree  # Latitude spacing in km
+  
+  # Compute and return cell area in km²
+  return(lon_length * lat_length)
+  
+}
+
+```
+
+## Overview
+
+```{r}
+binned_effort_by_ssvid <- read_csv(file.path(prj_path, 
+                                             "data/raw/GFW/CYP_effort_by_ssvid_2016_2024.csv"),
+                                   show_col_types = FALSE)
+
+binned_effort_by_ssvid <- binned_effort_by_ssvid |> 
+  mutate(shipname = case_when(ssvid == '209212000' ~ 'MARIA MBOUMBOULINA',
+                              ssvid == '212899000' ~ "MY HENDRIKA II",
+                              ssvid == '209419000' ~ 'TAXIARHIS',
+                              TRUE ~ shipname),
+         gear_type = case_when(gear_type %in% c("fishing", "other_purse_seines", "dredge_fishing") ~ "other_fishing",
+                               gear_type %in% c("set_longlines", "set_gillnets") ~ "set_longlines_&_gillnets",
+                               TRUE ~ gear_type),
+         fishing_hours = if_else(gear_type == "trawlers", 
+                                 trawling_hours,
+                                 fishing_hours),
+         pixel_area_km2 = calculate_cell_area(lat_bin, res = 0.01)) |> 
+  select(-trawling_hours, -eez, -flag, -hours) |> 
+  filter(fishing_hours > 0) |> 
+  mutate(across(c(pixel_area_km2, engine_power_kw, length_m, fishing_hours, elevation_m, trawling_distance_km, distance_from_shore_m), 
+                ~round(.x, 3))) 
+
+# Spatial join with 12nm zone
+
+tmp <- binned_effort_by_ssvid |> 
+  vect(geom = c("lon_bin", "lat_bin"), crs = "EPSG:4326")
+
+tmp$in_12nm <- ifelse(relate(tmp, CYP_12nm, "intersects"), TRUE, FALSE)
+
+binned_effort_by_ssvid <- as.data.frame(tmp) |> 
+  bind_cols(geom(tmp, df = T) |> 
+              select(lat_bin = y, lon_bin = x)) 
+
+binned_effort_by_ssvid <- binned_effort_by_ssvid |> 
+  select(year, lon_bin, lat_bin, pixel_area_km2, in_12nm, distance_from_shore_m, elevation_m,
+         ssvid, shipname, gear_type, engine_power_kw, length_m, fishing_hours, trawling_distance_km) |> 
+  filter(fishing_hours > 0.0167) # at least 1 minutes of fishing in a pixel in a year by a vessel
+```
+
+```{r}
+# Summarize effort by vessel / year
+
+annual_effort_by_ssvid <- binned_effort_by_ssvid |> 
+  group_by(year, ssvid, shipname, gear_type) |> 
+  summarize(total_footprint_km2 = sum(pixel_area_km2[fishing_hours > 0], na.rm = T),
+            total_fishing_hours = sum(fishing_hours, na.rm = T),
+            .groups = "drop") |> 
+  mutate(across(.cols = where(is.numeric), .fns = \(x) round(x, 2))) |> 
+  filter(total_fishing_hours > 1) 
+
+# Summarize effort by gear / year
+
+annual_effort_by_gear <- binned_effort_by_ssvid |> 
+  group_by(year, gear_type, lat_bin, lon_bin, pixel_area_km2) |> 
+  summarize(total_fishing_hours = sum(fishing_hours),
+            .groups = "drop") |> 
+  group_by(year, gear_type) |> 
+  summarize(total_footprint_km2 = sum(pixel_area_km2),
+            total_fishing_hours = sum(total_fishing_hours, na.rm = T),
+            .groups = "drop") |> 
+  left_join(annual_effort_by_ssvid |> 
+              group_by(year, gear_type) |> 
+              summarize(n_vessels = n_distinct(ssvid),
+                        .groups = "drop")) |> 
+  select(year, gear_type, n_vessels, everything()) |> 
+  mutate(across(.cols = where(is.numeric), .fns = \(x) round(x, 2)))
+
+summary_tbl_by_gear <- annual_effort_by_gear |> 
+  pivot_longer(-c(year, gear_type), names_to = "variable") |> 
+  pivot_wider(names_from = "year", values_from = "value") |> 
+  mutate(across(.cols = where(is.numeric),
+                .fns = \(x) round(x, 2)))
+
+avgs_by_gear <- annual_effort_by_gear |> 
+  group_by(year) |> 
+  mutate(pct_effort = total_fishing_hours/sum(total_fishing_hours)) |> 
+  ungroup() |> 
+  group_by(gear_type) |> 
+  summarize(n_vessels = mean(n_vessels, na.rm = T),
+            total_footprint_km2 = mean(total_footprint_km2, na.rm = T),
+            total_fishing_hours = mean(total_fishing_hours, na.rm = T)) |> 
+  mutate(across(.cols = where(is.numeric), 
+                .fns = \(x) round(x, 2))) |> 
+  pivot_longer(-gear_type, names_to = "variable",values_to = "Mean")
+
+summary_tbl_by_gear <- summary_tbl_by_gear |> 
+  left_join(avgs_by_gear) |> 
+  mutate(across(.cols = where(is.numeric), 
+                .fns = \(x) round(x, 1))) |> 
+  select(gear_type, variable, Mean, everything())
+```
+
+Bottom trawling accounts for ~21% of the total annual fishing effort in Cyprus’ Exclusive Economic Zone (EEZ) between 2016 and 2024 [@gfw2025]. On average, bottom trawlers operated for 3,500 hours per year, with a fleet of 2–3 vessels. In comparison, drifting longlines were the dominant gear type, representing about 61% of total fishing effort (10,100 hours per year) with an average fleet of 17 vessels. Vessels with unidentified gear types (hereafter classified as “other fishing”) contributed roughly 14% (2,300 hours per year), while set longlines and set gillnets together accounted for the remaining 5% of total effort (@fig-effort-by-gear-bar)
+
+```{r}
+#| label: fig-effort-by-gear-bar
+#| fig-cap: "Average annual fishing effort (hours) by gear type in Cyprus' EEZ (2016 - 2024)"
+#| fig-width: 10
+#| fig-height: 6
+
+annual_effort_by_gear |> 
+  mutate(gear_type = str_to_title(str_replace_all(gear_type, "_", " "))) |> 
+  ggplot(aes(x = as.factor(year), 
+             y = total_fishing_hours, 
+             fill = gear_type))+
+  geom_col()+
+  geom_text(aes(label = n_vessels),col = "white",
+            position = position_stack(vjust = .5))+
+  theme_custom()+
+  labs(y = "", x = "", 
+       title = "Fishing Activity in Cyprus' Exclusive Economic Zone", 
+       subtitle = "Annual Fishing Effort (hours) by Gear Type",
+       caption = "Numbers on bars indicate the number of active vessels.")+
+  scale_y_continuous(labels = scales::comma)+
+  paletteer::scale_fill_paletteer_d("MetBrewer::Kandinsky")+
+  theme(legend.position = "inside", 
+        legend.position.inside =  c(0.15,.88))
+
+ggsave(file.path(prj_path, "figures/gfw_annual_effort_by_gear.png"), width = 12, height = 8)
+```
+
+Overall, bottom trawling has occurred across 4,112 km² of Cyprus’ EEZ and 1,865 km² of its territorial waters, meaning that approximately 4.1% of the EEZ and 12.9% of the territorial waters have been trawled at least once since 2016 [@gfw2025]. This estimate is based on the cumulative area of 0.01º pixels where trawling has been detected. Using this metric, on average, 1,058 km² of the EEZ and 668.4 km² of the territorial waters are trawled annually (@fig-effort-by-gear-map).
+
+In comparison, drifting longlines have fished across a much larger area, covering approximately 29,000 km² in total, with an annual footprint ranging from 6,000 to 14,000 km² (6–14% of the EEZ). Meanwhile, vessels classified as “other fishing” initially operated over areas exceeding 2,000 km² but have experienced a significant contraction in recent years. Notably, the spatial patterns of some vessels in the early years—such as Santa Maria and GIA SOU KAIKI MOU AI NIKOLA—resemble those of bottom trawlers, suggesting they may have engaged in trawling at least partially.
+
+```{r}
+#| label: fig-effort-by-gear-map
+#| fig-cap: "Average annual fishing effort (hours) by gear type in Cyprus' EEZ (2016 - 2024)"
+#| fig-width: 10
+#| fig-height: 8
+#| 
+binned_effort_by_gear <- binned_effort_by_ssvid |> 
+  group_by(year, gear_type, lat_bin, lon_bin, pixel_area_km2) |> 
+  summarize(total_fishing_hours = sum(fishing_hours, na.rm = T),
+            .groups = "drop") |> 
+  complete(year, nesting(gear_type, lat_bin, lon_bin, pixel_area_km2), # filled missing years for existing (gear_type, lat, lon) combinations.
+           fill = list(total_fishing_hours = 0))
+
+binned_effort_by_gear |> 
+  mutate(gear_type = str_to_title(str_replace_all(gear_type, "_", " "))) |> 
+  group_by(gear_type, lat_bin, lon_bin) |> 
+  summarize(mean_total_fishing_hours = mean(total_fishing_hours, na.rm = T),
+            .groups = "drop") |> 
+  ggplot()+
+  geom_raster(aes(lon_bin, lat_bin,, fill = mean_total_fishing_hours))+
+  geom_spatvector(data = CYP_eez, fill = "transparent", col = "#4357AD", linetype = "dashed")+
+  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed")+
+  geom_spatvector(data = CYP_land, fill = "#8B94A3", col = "#8B94A3")+
+  facet_wrap(~gear_type)+
+  labs(title = "Fishing Activity in Cyprus' Exclusive Economic Zone",
+       subtitle = "Average Fishing Effort (hours) by Gear Type (2016 - 2024)", 
+       y = "", x = "", fill = "Effort (hours)")+
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0),
+        plot.title.position = "plot",  
+        plot.subtitle = element_text(size = 14),
+        panel.grid.major = element_line(color = "gray85", linewidth = 0.3),  # Thin major grid lines
+        panel.grid.minor = element_line(color = "gray90", linewidth = 0.2),  # Even thinner minor grid lines
+        panel.background = element_blank(),
+        legend.position = "right",
+        strip.background = element_blank(),  # Remove strip background
+        strip.text = element_text(size = 12 * 1.2, face = "bold"))+
+  paletteer::scale_fill_paletteer_c("grDevices::Heat 2", 
+                                    direction = -1,
+                                    trans = "log10", 
+                                    labels = scales::label_comma(accuracy = 0.001))
+
+ggsave(file.path(prj_path, "figures/gfw_effort_map_by_gear.png"), width = 12, height = 8)
+```
+
+Most bottom trawling activity in Cyprus is concentrated within territorial waters, with 88% of total effort occurring inside the 12 nautical mile (n.m.) boundary (@fig-effort-in-n-out). In contrast, drifting longlines are primarily deployed beyond this zone, with 75% of their effort taking place outside territorial waters. “Other fishing” vessels also operate largely within the 12 n.m. limit, accounting for 67% of their total effort. Similarly, set longlines and set gillnets allocate approximately 75% of their fishing effort within territorial waters [@gfw2025]. These spatial distributions highlight distinct patterns of gear use, with bottom trawling and passive gears being more coastal, while drifting longlines operate predominantly in offshore areas.
+
+```{r}
+#| label: fig-effort-in-n-out
+#| fig-cap: "Average annual fishing effort (hours) by gear type and location in Cyprus' EEZ. Numbers on bars indicate the contribution (%) to mean annual effort."
+#| fig-width: 7
+#| fig-height: 4
+#| 
+binned_effort_by_ssvid |> 
+  group_by(year, gear_type, in_12nm) |> 
+  summarize(total_fishing_hours = sum(fishing_hours, na.rm = T),
+            .groups = "drop") |> 
+  group_by(gear_type, in_12nm) |> 
+  summarize(avg_fishing_hours = mean(total_fishing_hours, na.rm = T),
+            .groups = "drop") |> 
+  group_by(gear_type) |> 
+  mutate(fct = paste(round(100*avg_fishing_hours/sum(avg_fishing_hours),0),
+                     "%", sep = " ")) |> 
+  mutate(in_12nm = if_else(in_12nm, "Inside 12 n.m.", "Outside 12 n.m.")) |> 
+  ggplot(aes(gear_type, avg_fishing_hours, fill = in_12nm))+
+  geom_col()+
+  geom_text(aes(label = fct), col = "white",
+            position = position_stack(vjust = .5))+
+  theme_custom()+
+  labs(y = "", x = "", 
+       title = "Fishing in Cyprus' EEZ", 
+       subtitle = "Average Annual Effort (hours) by Gear Type and Location",
+       caption = "Numbers on bars indicate the contribution (%) to mean annual effort")+
+  scale_y_continuous(labels = scales::comma)+
+  paletteer::scale_fill_paletteer_d("MetBrewer::Egypt")+
+  theme(legend.position = "inside", 
+        legend.position.inside =  c(0.75,.85))
+
+ggsave(file.path(prj_path, "figures/gfw_avg_effort_by_gear_in_vs_out_12nm.png"), width = 12, height = 8)
+```
+
+## The fleet 
+
+```{r}
+p_depth_km <- 2.4/100000 # 2.4 cm depth in km
+
+pixel_depth_km <- 1/1000 # 1 meter in km
+
+binned_trawling_by_ssvid <- binned_effort_by_ssvid |> 
+  filter(gear_type == "trawlers", ssvid != 210380000) |> # Remove Raina, minimally active in 2023
+  rename(trawled_hours = fishing_hours,
+         trawled_distance_km = trawling_distance_km) |> 
+  mutate(net_width_m = round(10.6608*engine_power_kw^0.2921), # These are Otter Trawls
+         swept_area_km2 = trawled_distance_km*(net_width_m/1000),
+         swept_vol_km3 = swept_area_km2*p_depth_km) |> 
+  relocate(net_width_m, .after = "length_m") |> 
+  select(-gear_type) 
+```
+
+Since 2016, five distinct bottom trawlers have been detected fishing in Cyprus’ EEZ (GFW, 2025). Among them, My Hendrika II (LOA: 19.5 m, engine power: 292 kW) and Maria Mboumboulina (LOA: 24 m, engine power: 436.4 kW) account for the majority of the fishing effort, contributing 53% and 30%, respectively [@gfw2025]. These two vessels dominate bottom trawling activity in the region, while the remaining effort is distributed among three other trawlers (@tbl-effort-by-trawler). The third most active vessel, Taxiarhis, accounts for 10% of total effort but operates primarily beyond the 12-nautical-mile (n.m.) zone, making it less relevant to this analysis of territorial waters [@gfw2025].
+
+```{r}
+#| label: tbl-effort-by-trawler
+#| tbl-cap: "Key metrics for detected trawlers in Cyprus' EEZ"
+#| 
+annual_trawling_by_ssvid <- binned_trawling_by_ssvid |> 
+  group_by(year, ssvid, shipname, length_m, engine_power_kw, net_width_m) |> 
+  summarize(total_footprint_km2 = sum(pixel_area_km2, na.rm = T),
+            total_trawled_hours = sum(trawled_hours, na.rm = T),
+            total_trawled_distance_km = sum(trawled_distance_km, na.rm = T),
+            total_swept_area_km2 = sum(swept_area_km2, na.rm = T),
+            .groups = 'drop')
+
+avg_trawl_by_ssvid <- annual_trawling_by_ssvid |> 
+  group_by(shipname, length_m, engine_power_kw, net_width_m) |> 
+  summarize(avg_footprint_km2 = mean(total_footprint_km2),
+            avg_trawled_hours = mean(total_trawled_hours),
+            avg_trawled_distance_km = mean(total_trawled_distance_km),
+            avg_swept_area_km2 = mean(total_swept_area_km2),
+            .groups = "drop") |> 
+  arrange(desc(avg_trawled_hours)) |> 
+  mutate(across(contains("avg"),
+                .fns = \(x) 100*x/sum(x),
+                .names = "{.col}_pct")) |> 
+  mutate(across(where(is.numeric), round)) |> 
+  mutate(across(c( avg_trawled_hours, avg_trawled_distance_km, avg_footprint_km2, avg_swept_area_km2), 
+                .fns = ~ paste0(.," (", round(get(paste0(cur_column(), "_pct")), 1), "%)"))) |> 
+  select(-c(avg_footprint_km2_pct, avg_trawled_hours_pct, avg_trawled_distance_km_pct, avg_swept_area_km2_pct))
+
+avg_trawl_by_ssvid |>
+  gt() |>
+  tab_header(title = md("**Bottom Trawling Vessel Summary**"),
+             subtitle = md("Key metrics for detected trawlers in Cyprus' EEZ")) |>
+  cols_label(shipname = "Vessel Name",
+             length_m = "Length (m)",
+             engine_power_kw = "Engine Power (kW)",
+             net_width_m = "Net Width (m)",
+             avg_footprint_km2 = "Avg. Footprint (km²)",
+             avg_trawled_hours = "Avg. Trawled Hours",
+             avg_trawled_distance_km = "Avg. Distance (km)",
+             avg_swept_area_km2 = "Avg. Swept Area (km²)") |>
+ # Format numeric columns with thousand separators
+  fmt_number(columns = c(length_m, engine_power_kw, net_width_m, avg_trawled_hours, avg_trawled_distance_km, avg_swept_area_km2),
+    decimals = 1,
+    use_seps = TRUE) |>   # Add thousand separators) |> 
+  # Highlight the first two rows
+  tab_style(style = cell_fill(color = "#CCE8CC"),
+            locations = cells_body(rows = 1:2)) |>
+  # Make the table visually appealing
+  tab_options(table.font.size = "medium",
+              table.border.top.style = "solid",
+              table.border.top.width = px(2),
+              table.border.top.color = "black",
+              heading.align = "center",
+              column_labels.font.weight = "bold")
+```
+
+## Trawling Effort
+
+Between 2016 and 2024, bottom trawling activity in Cyprus’ EEZ experienced notable fluctuations. From 2016 to 2018, annual effort remained relatively stable, averaging around 2,100 hours [@gfw2025]. In 2020–2021, effort increased significantly, exceeding 5,000 hours despite fewer vessels operating during this period. This peak was followed by a gradual decline, with effort stabilizing at approximately 3,000 hours by 2024 (@fig-trawling-by-vessel-yr-in-n-out). These changes may reflect shifts in fleet composition, regulatory measures, or economic factors influencing fishing operations ((COVID?))
+
+```{r, }
+#| label: fig-trawling-by-vessel-yr-in-n-out
+#| fig.cap: "Annual bottom trawling effort (hours) by vessel in Cyprus' EEZ and territorial waters between 2016 and 2024"
+#| fig-width: 10
+#| fig-height: 6
+
+binned_trawling_by_ssvid |> 
+  group_by(year, ssvid, shipname, length_m, engine_power_kw, in_12nm) |> 
+  summarize(total_footprint_km2 = sum(pixel_area_km2, na.rm = T),
+            total_trawled_hours = sum(trawled_hours, na.rm = T),
+            total_trawled_distance_km = sum(trawled_distance_km, na.rm = T),
+            total_swept_area_km2 = sum(swept_area_km2, na.rm = T),
+            .groups = 'drop') |> 
+  mutate(shipname = str_to_title(shipname)) |> 
+  mutate(in_12nm = if_else(in_12nm, "Inside 12 n.m.", "Outside 12 n.m.")) |> 
+  ggplot()+
+  geom_col(aes(x = factor(year), y = total_trawled_hours, fill = fct_reorder(shipname, total_trawled_hours)))+
+  theme_custom()+
+  labs(y = "", x = "", title = "Bottom Trawling in Cyprus' Exclusive Economic Zone", 
+       subtitle = "Fishing Effort (hours) by Vessel Inside and Outside Territorial Waters (12 n.m.)")+
+  scale_y_continuous(labels = scales::comma)+
+  facet_wrap(~in_12nm, nrow = 2)+
+  paletteer::scale_fill_paletteer_d("nord::aurora", na.value = "grey")+
+  theme(legend.position = "inside", 
+        legend.position.inside =  c(0.15,.87))
+
+ggsave(file.path(prj_path, "figures/gfw_trawling_effort_by_vessel.png"), height = 9, width = 11)
+```
+### Official sources
+
+Official data provides a key validation point for our findings. According to the EU JRC Fisheries Dependent Information (FDI) Data Call, Cyprus’s bottom trawling fleet comprised between one and four active vessels per quarter from 2016 to 2023. These vessels, classified as demersal otter trawlers, ranged in length from 24 to 40 meters. Notably, the fleet appears to have undergone renewal in 2020, as the average vessel age dropped sharply from 31.5 years. Around the same time, total kilowatts (KW) and gross tonnage (GT) increased, suggesting the introduction of newer, higher-capacity vessels (@fig-dcf-fleet)
+
+```{r}
+#| label: fig-dcf-fleet
+#| fig.cap: "Trends in fleet's capacity, power, and age between 2016 and 2024"
+#| fig-width: 7
+#| fig-height: 4
+
+econ_df <- readxl::read_xlsx(file.path(prj_path,  "data/raw/Economic data for DTS Cyprus waters.xlsx"),
+                             range = "A3:I20") |> 
+  janitor::clean_names()
+
+econ_df_long <- econ_df |> 
+  pivot_longer(-c(acronym, unit)) |> 
+  separate(name, into = c("tmp", "year")) |> 
+  select(-tmp) |> 
+  rename(variable = acronym) |> 
+  mutate(unit = stringr::str_to_upper(unit)) |> 
+  select(year, variable, unit, value)
+
+econ_df_wide <- econ_df_long |> 
+  select(-unit) |> 
+  pivot_wider(names_from = variable, values_from = value) |> 
+  janitor::clean_names() |> 
+  select(-total_other_income, -total_investments)
+
+econ_df_long |> 
+  filter(variable %in% c("total KW", "total GT", "average age")) |> 
+  mutate(variable = str_to_title(variable)) |> 
+  select(-unit) |> 
+  ggplot(aes(x = year, y = value, col = variable))+
+  geom_point()+
+  geom_line(aes(group = variable))+ 
+  labs(x = "", y = "", 
+       title = "Fleet Capacity, Power, and Age",
+       subtitle = "Annual trends (2016-2022)", 
+       caption = "source: EU Data Collection Framework (DCF)")+
+  theme_custom()+
+  theme(legend.position = c(0.8, 0.65))+
+  paletteer::scale_color_paletteer_d("nbapalettes::warriors")
+
+ggsave(file.path(prj_path, "figures", "DCF_fleet_GT_KW_and_age.png"), width = 8)
+```
+
+As observed in GFW data, official sources confirm that fishing effort has fluctuated considerably over this period. Before 2018, key effort metrics (fishing days, sea days, KW hours at sea, and trips) declined steadily. In 2018, these metrics showed a temporary increase, suggesting a short-term spike in activity. More recently, effort has tapered off again, indicating either a continuation of the previous downward trend or stabilization at lower levels (@fig-fdi-effort-trends, @fig-dcf-effort-trends).
+
+```{r}
+#| label: fig-dcf-effort-trends
+#| fig.cap: "Fishing effort between 2016 and 2024"
+#| fig-width: 7
+#| fig-height: 4
+#| 
+econ_df_long |> 
+  filter(variable %in% c("total Fish Days", "total Sea Days", "total Trips")) |> 
+  mutate(variable = str_to_title(variable)) |> 
+  ggplot(aes(x = year, y = value, col = variable, group = variable))+
+  geom_point()+
+  geom_line()+
+  labs(y = "", x = "", title = "Bottom Trawling Activity", 
+       subtitle = "Annual trends (2016-2022)",
+       caption = "source: EU Data Collection Framework (DCF)")+
+  theme_custom()+
+  theme(legend.position = c(0.86, 0.27))+
+  paletteer::scale_color_paletteer_d("trekcolors::starfleet")
+
+ggsave(file.path(prj_path, "figures", "DCF_annual_activity.png"), height  = 8, width = 8)
+```
+
+```{r}
+#| label: fig-fdi-effort-trends
+#| fig.cap: "Fishing effort between 2016 and 2024"
+#| fig-width: 8
+#| fig-height: 6
+
+fdi_summary <- read_csv(file.path(prj_path,  "data/raw/FDI/FDI_EffortSummary(tableG) _exported_data.csv")) |> 
+  janitor::clean_names() |> 
+  filter(year > 2015) |> 
+  mutate(yr_qrt = zoo::as.yearqtr(paste0(year, "-", quarter))) |> 
+  ungroup() |> 
+  group_by(year, quarter, yr_qrt) |> 
+  summarize(vessel_length = unique(vessel_length),
+            total_sea_days = sum(totseadays),
+            total_fish_days = sum(totfishdays), 
+            hr_at_sea = sum(hrsea),
+            KWhr_at_sea = sum(as.numeric(kwhrsea)), 
+            n_vessels = sum(totves)) |> 
+  ungroup()
+
+fdi_summary |> 
+  select(yr_qrt, total_sea_days, total_fish_days, KWhr_at_sea) |> 
+  pivot_longer(-yr_qrt) |> 
+  mutate(name = str_remove_all(name, "total_"),
+         name = str_to_sentence(str_replace_all(name, "_", " "))) |> 
+  ggplot(aes(yr_qrt, value))+
+  geom_point()+
+  geom_smooth(alpha = 0.25, col = "#FBD87F")+
+  facet_wrap(~name, scales = "free_y", nrow = 3, switch = "y")+
+  labs(x = "", y = "" , title = "Bottom Trawling Fishing Activity", 
+       subtitle = "Quarterly trends (2016 - 2022)",
+       caption = "source: EU JRC Fisheries Dependent Information (FDI) Data Call")+
+  theme_custom()+
+  scale_y_continuous(labels = scales::comma)
+
+ggsave(file.path(prj_path, "figures", "FDI_quarterly_effort_trends.png"), height  = 8, width = 8)
+```
+
+## Swept Area
+
+```{r}
+binned_swept_area_by_ssvid <- binned_trawling_by_ssvid |> 
+  select(year, ssvid, shipname, lat_bin, lon_bin, in_12nm, pixel_area_km2, 
+         trawled_hours, trawled_distance_km, swept_area_km2, swept_vol_km3) |> 
+  complete(nesting(ssvid, shipname, lat_bin, lon_bin, in_12nm, pixel_area_km2), year, # ensure there is a ssvid/lat/lon combo for each year.
+           fill = list(trawled_hours = 0, 
+                       trawled_distance_km = 0, 
+                       swept_area_km2 = 0,
+                       swept_vol_km3 = 0)) |> 
+  select(year, ssvid, shipname, lat_bin, lon_bin, in_12nm, pixel_area_km2, 
+         trawled_hours, trawled_distance_km, swept_area_km2, swept_vol_km3)
+
+annual_swept_area <- binned_swept_area_by_ssvid |> 
+  group_by(year, lat_bin, lon_bin, in_12nm, pixel_area_km2) |> 
+  summarize(trawled_hours = sum(trawled_hours),
+            trawled_distance_km = sum(trawled_distance_km),
+            swept_area_km2 = sum(swept_area_km2),
+            swept_vol_km3 = sum(swept_vol_km3),
+            .groups = "drop")
+
+avg_swept_area <- annual_swept_area |> 
+  group_by(lat_bin, lon_bin, in_12nm, pixel_area_km2) |> 
+  summarize(avg_trawled_hours = mean(trawled_hours),
+            avg_trawled_distance_km = mean(trawled_distance_km),
+            avg_swept_area_km2 = mean(swept_area_km2),
+            avg_swep_vol_km3 = mean(swept_vol_km3),
+            .groups = "drop")
+
+total_trawlable_area <- round(sum(avg_swept_area$pixel_area_km2)) # 4109 km2 are trawled in total at least once
+total_trawlable_area_12nm <- round(sum(avg_swept_area$pixel_area_km2[avg_swept_area$in_12nm])) # 1865 km2 in 12nm
+
+# annual_swept_area |> 
+#   group_by(year, in_12nm) |> 
+#   summarize(footprint_km2 = sum(pixel_area_km2[trawled_hours > 0]),,
+#             trawled_hours = sum(trawled_hours, na.rm = T),
+#             swept_area_km2 = sum(swept_area_km2, na.rm = T),
+#             .groups = "drop") |> 
+#   group_by(in_12nm) |> 
+#   summarize(across(c(trawled_hours, footprint_km2, swept_area_km2), 
+#                    .fns = ~ round(mean(.), 1)))
+```
+
+The footprint values presented above provide a broad measure of the fleet’s operational range, but they do not fully capture the extent of seafloor disturbance. The actual impact—referred to here as the swept area—can be either smaller or larger than the detected footprint due to two key opposing factors: (1) the relatively narrow width of trawl nets (40–60 m) compared to the coarse resolution of footprint mapping (~1 km² per pixel) and (2) the repeated passes over the same fishing grounds multiple times per year [@sala2021]. Consequently, in areas of low-intensity trawling, the cumulative swept area may be smaller than the detected footprint, while in heavily trawled zones, it can exceed it. This pattern is evident in Cyprus’ territorial waters, where an average of 668.4 km² (4.5%) is trawled annually, yet the cumulative swept area reaches 897.7 km² (6.1%), highlighting the concentrated nature of bottom trawling in these areas (@fig-swept-area).
+
+```{r}
+#| label: fig-swept-area
+#| fig.cap: "Average annual swept area (km²) in Cyprus'territorial waters between 2016 and 2024"
+#| fig-width: 10
+#| fig-height: 7
+#| 
+avg_swept_area |> 
+  filter(avg_trawled_hours > 0.0167, in_12nm) |>  # at least 1 minute of trawling on average
+  ggplot()+
+  geom_raster(aes(lon_bin, lat_bin,, fill = avg_swept_area_km2))+
+  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed")+
+  geom_spatvector(data = CYP_land, fill = "#8B94A3", col = "#8B94A3")+
+  labs(title = "Bottom Trawling in Cyprus Territorial Waters",
+       subtitle = expression("Average Swept Area (km"^2*") between 2016 - 2022"), 
+       y = "", x = "", fill = expression("Swept area (km"^2*")"))+
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0),
+        plot.title.position = "plot",  
+        plot.subtitle = element_text(size = 14),
+        panel.grid.major = element_line(color = "gray85", linewidth = 0.3),  # Thin major grid lines
+        panel.grid.minor = element_line(color = "gray90", linewidth = 0.2),  # Even thinner minor grid lines
+        panel.background = element_blank(),
+        legend.position = "right",
+        strip.background = element_blank(),  # Remove strip background
+        strip.text = element_text(size = 12 * 1.2, face = "bold"))+
+  paletteer::scale_fill_paletteer_c("grDevices::Heat 2", direction = -1, trans = "log10", breaks = c(0.01, 0.1, 1),
+                                    ,labels = scales::comma)
+
+ggsave(file.path(prj_path, "figures/gfw_swept_area_12nm_map.png"), width = 12, height = 8)
+```
+
+```{r}
+#| label: fig-swept-area-by-year
+#| fig.cap: "Annual swept area (km²) by year in Cyprus' territorial waters between 2016 and 2024"
+#| fig-width: 10
+#| fig-height: 7
+#| 
+# Additional maps of bottom trawling 
+
+## By year
+
+annual_swept_area |> 
+  filter(trawled_hours > 0.0167, in_12nm) |>  # at least 1 minute of trawling on average
+  ggplot()+
+  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed")+
+  geom_spatvector(data = CYP_land, fill = "#8B94A3", col = "#8B94A3")+
+  geom_raster(aes(lon_bin, lat_bin, fill = swept_area_km2))+
+  facet_wrap(~year)+
+    labs(title = "Bottom Trawling in Cyprus Territorial Waters",
+       subtitle = expression("Average Swept Area (km"^2*") between 2016 - 2022"), 
+       y = "", x = "", fill = expression("Swept area (km"^2*")"))+
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0),
+        plot.title.position = "plot",  
+        plot.subtitle = element_text(size = 14),
+        panel.grid.major = element_line(color = "gray85", linewidth = 0.3),  # Thin major grid lines
+        panel.grid.minor = element_line(color = "gray90", linewidth = 0.2),  # Even thinner minor grid lines
+        panel.background = element_blank(),
+        legend.position = "right",
+        strip.background = element_blank(),  # Remove strip background
+        strip.text = element_text(size = 12 * 1.1, face = "bold"))+
+  paletteer::scale_fill_paletteer_c("grDevices::Heat 2", direction = -1, 
+                                    trans = "log10", 
+                                    labels = scales::comma)
+
+ggsave(file.path(prj_path, "figures/gfw_swept_area_12nm_map_by_year.png"), width = 12, height = 8)
+# By vessel
+```
+
+```{r}
+#| label: fig-swept-area-by-vessel
+#| fig.cap: "Annual swept area (km²) by vessel in Cyprus' territorial waters between 2016 and 2024"
+#| fig-width: 10
+#| fig-height: 7
+
+binned_swept_area_by_ssvid |> 
+  filter(trawled_hours > 0.0167, in_12nm) |>  # at least 1 minute of trawling on average
+  group_by(shipname, lat_bin, lon_bin, in_12nm) |> 
+  summarize(avg_trawled_hours = mean(trawled_hours, na.rm = T),
+            avg_trawled_distance_km = mean(trawled_distance_km,na.rm = T),
+            avg_swept_area_km2 = mean(swept_area_km2,na.rm = T),
+            .groups = "drop") |> 
+  ggplot()+
+  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed")+
+  geom_spatvector(data = CYP_land, fill = "#8B94A3", col = "#8B94A3")+
+  geom_raster(aes(lon_bin, lat_bin, fill = avg_trawled_hours))+
+  facet_wrap(~shipname)+
+    labs(title = "Bottom Trawling in Cyprus Territorial Waters",
+       subtitle = expression("Average Swept Area (km"^2*") by vessel between 2016 - 2022"), 
+       y = "", x = "", fill = expression("Swept area (km"^2*")"))+
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0),
+        plot.title.position = "plot",  
+        plot.subtitle = element_text(size = 14),
+        panel.grid.major = element_line(color = "gray85", linewidth = 0.3),  # Thin major grid lines
+        panel.grid.minor = element_line(color = "gray90", linewidth = 0.2),  # Even thinner minor grid lines
+        panel.background = element_blank(),
+        legend.position = "right",
+        strip.background = element_blank(),  # Remove strip background
+        strip.text = element_text(size = 12 * 1.1, face = "bold"))+
+  paletteer::scale_fill_paletteer_c("grDevices::Heat 2", direction = -1, 
+                                    trans = "log10", 
+                                    labels = scales::comma)
+
+ggsave(file.path(prj_path, "figures/gfw_swept_area_12nm_map_by_vessel.png"), width = 12, height = 8)
+```
+
+```{r}
+p_depth_km <- 2.4/100000 # 2.4 cm to km
+
+strata_depth_km <- 1/1000 # 1m to km
+
+annual_SAR_SVR <- annual_swept_area |> 
+  filter(in_12nm) |> 
+  mutate(SAR = swept_area_km2/pixel_area_km2,
+         swept_vol_km3 = swept_area_km2*p_depth_km,
+         cell_volume_km3 = pixel_area_km2*strata_depth_km,
+         SVR = swept_vol_km3/cell_volume_km3)
+
+avg_SAR_per_pixel <-  annual_SAR_SVR |> 
+  group_by(lat_bin, lon_bin, pixel_area_km2) |> 
+  summarize(avg_SAR = mean(SAR, na.rm = T),
+            .groups = "drop") 
+
+mean_sar <- pull(summarize(avg_SAR_per_pixel, avg_SAR = mean(avg_SAR)))
+
+median_sar <- pull(summarize(avg_SAR_per_pixel, avg_SAR = median(avg_SAR)))
+
+# avg_SAR_per_pixel |> 
+#   mutate(bin = cut(avg_SAR, breaks = c(0, 0.01, 0.1, 1, 5, 10))) |> 
+#   group_by(bin) |>
+#   summarize(n = n(), .groups = "drop") |> 
+#   mutate(pct = round(100*n/sum(n), 1)) 
+```
+
+Understanding the spatial intensity of bottom trawling is important for assessing its ecological impact. By comparing the swept area to the size of each pixel, we estimate both the fraction of a cell fished and the frequency of trawling within it. This distinction allows us to differentiate between areas that experience occasional fishing and those subjected to repeated disturbance, which has significant implications for seafloor integrity and benthic ecosystem health [@sala2021].
+
+During the study period, the annual average swept area ratio (SAR) within territorial waters was 0.48 (median = 0.012), though the distribution was highly right-skewed (@fig-sar-hist). This indicates that while most areas experienced minimal disturbance, some were repeatedly trawled, concentrating fishing pressure in specific regions. 
+
+```{r}
+#| label: fig-sar-hist
+#| fig.cap: "Distribution of average Swept Area Ratios (SAR) in Cyprus' territorial waters between 2016 and 2024"
+#| fig-width: 7
+#| fig-height: 4
+
+avg_SAR_per_pixel |> 
+  ggplot(aes(x = avg_SAR)) +
+  geom_histogram(aes(y = ..density..), bins = 100, fill = "#90E0F3", alpha = 0.4) +  # Histogram as density
+  geom_density(color = "#083D77", size = 1) +  # Density plot
+  geom_vline(aes(xintercept = median_sar), color = "#97A7B3", linetype = "dashed", linewidth = 1) + # Median
+  geom_vline(aes(xintercept = mean_sar), color = "#45503B", linetype = "dashed", linewidth = 1) +  # Mean
+  scale_x_continuous(trans = "log10", labels = scales::label_number()) +
+  labs(title = "Distribution of Average Swept Area Ratios (SAR)",
+       subtitle = "Average SAR between 2016 - 2024",
+       x = "Average SAR (log scale)",
+       y = "") +
+  geom_text(aes(x = median_sar, y = 0.35, label = paste("Median = ", round(median_sar, 2))), 
+            color = "#97A7B3", angle = 90, hjust = -0.1, vjust = -0.5)  + # Median label
+  geom_text(aes(x = mean_sar, y = 0.35, label = paste("Mean = ", round(mean_sar, 2))), 
+            color = "#45503B", angle = 90, hjust = -0.1, vjust = -0.5) +  # Mean label
+  theme_custom()
+
+ggsave(file.path(prj_path, "figures/gfw_sar_distribution.png"), width = 12, height = 8)
+```
+
+On average, nearly half of each fished pixel’s area was directly impacted by trawling, highlighting the widespread yet uneven nature of fishing pressure. Notably, 15% of trawled areas in territorial waters had a cumulative SAR exceeding 1, meaning their entire area was trawled at least once, while 1.5% experienced SAR values over 5, with a maximum recorded SAR of 9. This means that in certain locations, the seabed was trawled multiple times within a single year, greatly increasing the risk of habitat degradation
+
+## Swept Volume 
+
+To further assess the physical impact of bottom trawling, we estimate the trawled volume by incorporating the penetration depth of the gear. While swept area provides a two-dimensional measure of disturbance, trawled volume accounts for the vertical extent of sediment disruption. For otter trawls, which are commonly used in demersal fisheries, the average penetration depth is 2.4 cm [@sala2021]. By multiplying the swept area by this depth, we quantify the total volume of sediment disturbed by trawling activity.
+
+To contextualize this disturbance, we also estimate the swept volume ratio (SVR) for each pixel by comparing the trawled volume to the total sediment volume within that cell. We define the volume of each pixel using a sediment depth of 1 meter, as this represents the depth of the carbon layer [@atwood2020]. The SVR provides a direct estimate of the fraction of sedimentary carbon in each cell that is disturbed by trawling, offering a more precise measure of its impact on carbon stocks. The average SVR of fished areas in Cyprus’ territorial waters was 0.011 (median = 0.0003), indicating that a small fraction of the seabed’s carbon layer is directly affected by trawling activity (@fig-svr-hist). 
+
+```{r}
+avg_SVR_per_pixel <-  annual_SAR_SVR |> 
+  group_by(lat_bin, lon_bin, pixel_area_km2) |> 
+  summarize(avg_SVR = mean(SVR, na.rm = T),
+            .groups = "drop") 
+
+mean_svr <- pull(summarize(avg_SVR_per_pixel, avg_SAR = mean(avg_SVR)))
+
+median_svr <- pull(summarize(avg_SVR_per_pixel, avg_SAR = median(avg_SVR)))
+
+sar_stack <- annual_SAR_SVR |>  
+  select(year, lon_bin, lat_bin, SAR) |> 
+  pivot_wider(names_from = year, values_from = SAR, names_prefix = "SAR_") |>  # Spread years into columns
+  rast(type = "xyz", crs = "EPSG:4326")
+
+writeRaster(sar_stack, file.path(prj_path, "data/processed/sar_stack.tif"), overwrite = T)
+
+svr_stack <- annual_SAR_SVR |>  
+  select(year, lon_bin, lat_bin, SVR) |> 
+  pivot_wider(names_from = year, values_from = SVR, names_prefix = "SVR_") |>  # Spread years into columns
+  rast(type = "xyz", crs = "EPSG:4326")
+
+writeRaster(svr_stack, file.path(prj_path, "data/processed/svr_stack.tif"), overwrite = T)
+```
+
+```{r}
+#| label: fig-svr-hist
+#| fig.cap: "Distribution of average Swept Area Ratios (SVR) in Cyprus' territorial waters between 2016 and 2024"
+#| fig-width: 7
+#| fig-height: 4
+#| 
+
+avg_SVR_per_pixel |> 
+  ggplot(aes(x = avg_SVR)) +
+  geom_histogram(aes(y = ..density..), bins = 100, fill = "#90E0F3", alpha = 0.4) +  # Histogram as density
+  geom_density(color = "#083D77", size = 1) +  # Density plot
+  geom_vline(aes(xintercept = median_svr), color = "#97A7B3", linetype = "dashed", linewidth = 1) + # Median
+  geom_vline(aes(xintercept = mean_svr), color = "#45503B", linetype = "dashed", linewidth = 1) +  # Mean
+  scale_x_continuous(labels = scales::label_number()) +
+  labs(title = "Distribution of Average Swept Volume Ratios (SVR)",
+       subtitle = "Average SVR between 2016 - 2024",
+       x = "Average SVR",
+       y = "") +
+  geom_text(aes(x = median_svr, y = 0.35, label = paste("Median = ", round(median_svr, 4))), 
+            color = "#97A7B3", angle = 90, hjust = -0.1, vjust = -0.5)  + # Median label
+  geom_text(aes(x = mean_svr, y = 0.35, label = paste("Mean = ", round(mean_svr, 4))), 
+            color = "#45503B", angle = 90, hjust = -0.1, vjust = -0.5) +  # Mean label
+  theme_custom()
+
+ggsave(file.path(prj_path, "figures/gfw_svr_distribution.png"), width = 12, height = 8)
+```
+
+## Summary
+
+@tbl-summary presents key metrics of bottom trawling activity in Cyprus’ territorial waters from 2016 to 2024, integrating data from both GFW and official sources. These metrics include total trawled area, trawling hours, distance covered, swept area, swept volume, and average SAR and SVR.
+
+```{r}
+#| label: tbl-summary
+#| tbl-cap: "Summary of key metrics for bottom trawling activity in Cyprus' territorial waters between 2016 and 2024"
+
+effort_summary <- annual_SAR_SVR |>
+  filter(in_12nm) |> 
+  group_by(year) |> 
+  summarize(pixel_area_km2 = sum(pixel_area_km2[trawled_hours > 0]),
+            trawled_hours = sum(trawled_hours),
+            trawled_distance_km = sum(trawled_distance_km),
+            swept_area_km2 = sum(swept_area_km2),
+            swept_vol_km3 = sum(swept_vol_km3),
+            avg_SAR = mean(SAR),
+            avg_SVR = mean(SVR))
+
+write_csv(effort_summary, file = file.path(prj_path, "data/processed/effort_summary.csv"))
+
+df <- econ_df_wide |> 
+              mutate(year = as.numeric(year)) |>
+              select(year, avg_age = average_age, total_gt, total_kw, total_trips) |> 
+  full_join(effort_summary, by = "year") |> 
+  pivot_longer(-year, names_to = "metric") |> 
+  pivot_wider(names_from = year, values_from = value) |> 
+  mutate(metric = case_when(metric == "pixel_area_km2" ~ "Total Area (km²)",
+                            metric == "trawled_hours" ~ "Total Hours",
+                            metric == "trawled_distance_km" ~ "Total Distance (km)",
+                            metric == "swept_area_km2" ~ "Total Swept Area (km²)",
+                            metric == "swept_vol_km3" ~ "Total Swept Volume (km³)",
+                            metric == "avg_SAR" ~ "Average SAR",
+                            metric == "avg_SVR" ~ "Average SVR",
+                            metric == "total_trips" ~ "Total Trips",
+                            metric == "total_gt" ~ "Total GT",
+                            metric == "total_kw" ~ "Total KW",
+                            metric == "avg_age" ~ "Average Age")) 
+  
+df |>   
+  gt(rowname_col = "metric") |> 
+  tab_header(title = "Trawling Activity Summary (2016 - 2022)",
+             subtitle = "Key Metrics of Fishing Effort and Impact") |> 
+  tab_style(style = list(
+    cell_fill(color = "lightgray"),
+    cell_text(weight = "bold")),
+    locations = cells_column_labels(everything())) |> 
+  tab_options(table.border.top.color = "black",
+              column_labels.font.weight = "bold") |> 
+  # Apply general rounding (2 decimal places) to all rows
+  fmt_number(columns = 2:ncol(df),
+             decimals = 0) |> 
+  # Apply 6 decimal places specifically to "Average SAR" and "Average SVR"
+  fmt_number(columns = 2:ncol(df),
+             rows = metric %in% c("Average SAR", "Average SVR", "Total Swept Volume (km³)"),
+             decimals = 4) |> 
+  tab_footnote(
+    footnote = "EU Data Collection Framework (DCF) data",
+    locations = cells_stub(rows = c("Average Age", "Total GT", "Total KW", "Total Trips"))) |> 
+  tab_footnote(
+    footnote = "Global Fishing Watch, 2025",
+    locations = cells_stub(rows = c("Total Area (km²)", "Average SAR", "Average SVR", "Total Swept Volume (km³)", 
+                                    "Total Hours", "Total Distance (km)", "Total Swept Area (km²)"
+                                    ))) |> 
+  opt_footnote_marks(marks = "standard")
+```

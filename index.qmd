@@ -1,0 +1,49 @@
+---
+title: "Introduction"
+author: "Juan S. Mayorga-Henao"
+format: 
+  html:
+    theme: lux
+    toc: true
+    toc-location: right
+    page-layout: full
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+
+Bottom trawling is a highly efficient yet ecologically disruptive fishing practice, presenting complex trade-offs between food production, biodiversity conservation, and climate mitigation. This method—dragging a weighted net along the seafloor—contributes substantially to global seafood supply but also generates significant environmental and economic challenges. Its impacts include seafloor habitat destruction, high levels of bycatch, and the release of stored carbon from marine sediments, exacerbating climate change and ecosystem degradation (@Clark2016, @Yesson2017, @Hinz2009, @McLaverty2021, @Pusceddu2014, @Hiddink2017, @sala2021). While bottom trawling supports livelihoods and food security, these benefits must be weighed against the broader ecological and economic costs it imposes.
+
+This report assesses the costs and benefits of permanently removing the industrial bottom trawling fleet from Cyprus’ national waters (within 12 n.m. from shore). It quantifies lost economic returns, including fisheries profits and employment, while evaluating environmental gains from reduced CO₂ emissions, sediment disturbance, and bycatch. The analysis also considers social impacts, particularly on food supply and alternative employment opportunities.
+
+By integrating economic, social, and environmental data, this study provides data-driven insights to support evidence-based fisheries management and inform policy decisions for a more sustainable marine economy.
+
+# Data sources
+
+We compiled and analyzed data from both official and public sources. Key datasets include:
+
+-   **EU JRC Fisheries Dependent Information (FDI) Data Call (2005–2022)**
+
+    -   Biological sampling of catches onboard vessels and at landing sites, including total landings and discards by species.
+
+    -   Quarterly effort data (2005–2022) detailing vessel numbers, days at sea, kW-hours at sea, and fishing days.
+
+-   **Mediterranean International Bottom Trawl Survey (MEDITS)**
+
+    -   Fisheries-independent data collected annually in June, providing species- and size-class-specific catch weights per haul.
+
+-   **EU Data Collection Framework (DCF) Economic Data (2015–2019)**
+
+    -   Annual economic performance indicators, including revenue from landings and costs (energy, labor, repairs, depreciation, etc.).
+
+    -   Fuel consumption data for direct CO₂ emissions estimates.
+
+    -   Fleet capacity indicators, such as average vessel age, total kW, and tonnage.
+
+-   **Global Fishing Watch (GFW)**
+
+    -   Trawling effort (hours), area trawled (km²), and sedimentary carbon emissions (tCO₂).
+
+All official data were collected and provided by DFMR under strict confidentiality agreements.

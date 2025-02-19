@@ -1,0 +1,313 @@
+---
+title: "Economic performance"
+format: 
+  html:
+    theme: lux
+    toc: true
+    toc-location: right
+    page-layout: full
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+```
+
+```{r}
+econ_df <- readxl::read_xlsx(file.path(prj_path,  "data/raw/Economic data for DTS Cyprus waters.xlsx"),
+                             range = "A3:I20") |> 
+  janitor::clean_names()
+
+econ_df_long <- econ_df |> 
+  pivot_longer(-c(acronym, unit)) |> 
+  separate(name, into = c("tmp", "year")) |> 
+  select(-tmp) |> 
+  rename(variable = acronym) |> 
+  mutate(unit = stringr::str_to_upper(unit)) |> 
+  select(year, variable, unit, value)
+
+econ_df_wide <- econ_df_long |> 
+  select(-unit) |> 
+  pivot_wider(names_from = variable, values_from = value) |> 
+  janitor::clean_names() |> 
+  select(-total_other_income, -total_investments)
+```
+
+## Revenue
+
+According to official source, revenue from fish catch (value of landings) started near 539k EUR in 2016, climbed to a peak of 730k EUR in 2021, and ended around 663k EUR in 2022, for an average of 613k EUR. While there’s a slight dip after 2021, revenue remains notably higher compared to initial years (@fig-revenue-ts).
+
+```{r}
+#| label: fig-revenue-ts
+#| fig-cap: "Total revenue from fish catch in the bottom trawl fishery"
+#| fig-width: 10
+#| fig-height: 6
+
+econ_df_long |> 
+  filter(str_detect(variable, "Income"), value > 0) |> 
+  mutate(variable = str_remove_all(variable, "total")) |> 
+  ggplot(aes(x = as.factor(year), y = value, group = variable))+
+  geom_line(size = 1.2, show.legend = F, color = "#2EC4B6") +
+  geom_point(size = 3, show.legend = F, color = "#CBF3F0") +
+  labs(title = "Revenue - Income From Fish Landings",
+       subtitle = "Annual trends (2016 - 2022)",
+       x = "",
+       y = "Revenue (€)",
+       color = "",
+       caption = "source: Economic performance data by the EU DCF") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_custom()
+
+ggsave(file.path(prj_path, "figures", "DCF_revenue_trend.png"), height = 8, width = 12)
+```
+```{r}
+landings_summary <- read_csv(file.path(prj_path, "data/processed/landings_and_discards_summary.csv"))
+
+price_per_ton <- landings_summary |> 
+  filter(source != "SAU") |> 
+  left_join(econ_df_wide |> 
+              mutate(year = as.numeric(year)) |> 
+              select(year, total_value_of_landings_income)) |> 
+  filter(!is.na(total_value_of_landings_income)) |> 
+  transmute(year, landings_tons, total_value_of_landings_income, 
+            price_per_ton = total_value_of_landings_income/landings_tons)
+```
+
+Combining total revenue with reported landings data reveals an average price per ton of fish landed at `r round(mean(price_per_ton$price_per_ton))` EUR, reflecting the market value of demersal species caught by bottom trawling. Prices fluctuated across years, with the highest recorded value exceeding `r round(max(price_per_ton$price_per_ton))` EUR in 2020.
+
+## Total costs
+
+Overall, energy costs represent the largest expense in the bottom trawl fishery, averaging 226k EUR over the period (@fig-costs, @fig-costs-areaplot). These costs have more than doubled, rising from approximately 167k EUR in 2016 to 364k EUR by 2022, likely driven by increasing fuel price. Depreciation follows as the second-largest cost category, averaging 114k EUR per year. Unlike energy costs, depreciation has gradually declined from 131k EUR in 2016 to below 98k EUR in 2022, likely reflecting reduced investment in new vessels or aging fleet assets with lower replacement values. This stands in contrast with earlier data suggest newer vessels were introduced in the fleet, which could have led to higher depreciation costs.
+
+```{r}
+#| label: fig-costs
+#| fig-cap: "Total annual costs in the bottom trawl fishery by type"
+#| fig-width: 10
+#| fig-height: 6
+#| 
+econ_df_long |> 
+  filter(str_detect(variable, "Cost|Wage"), value > 0) |> 
+  mutate(variable = str_remove_all(variable, "total")) |> 
+  ggplot(aes(x = as.factor(year), y = value, color = fct_rev(fct_reorder(variable, value)), group = variable))+
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  labs(title = "Total Costs",
+       subtitle = "Annual trends by category (2016-2022)",
+       x = "",
+       y = "Amount (€)",
+       color = "",
+       caption = "source: Economic performance data by the EU DCF") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_custom()+
+  theme(legend.position = c(0.2, 0.8),
+        legend.text = element_text(size = 10))+
+  paletteer::scale_color_paletteer_d("ggthemes::wsj_colors6")
+
+ggsave(file.path(prj_path, "figures", "DCF_costs_lineplot.png"), height = 7, width = 10)
+```
+
+Crew wages average 94k EUR, showing a sharp decline after 2016 before recovering to approximately 100k EUR between 2019 and 2021 (@fig-costs, @fig-costs-areaplot). This fluctuation may be linked to changes in fleet size, effort reductions, or shifts in labor market conditions affecting wage structures in the fishery. Repair costs stand at 79k EUR on average, following a clear downward trend from 122k EUR in 2016 to just 40k EUR in 2022. This decline could be due to reduced fishing effort, fleet contraction, or operational adjustments that limit wear and tear on vessels. Smaller but still relevant cost components include variable costs (~72k EUR) and non-variable costs (~37k EUR), which fluctuate year to year but remain well below the major expenses (@fig-costs-areaplot).
+
+```{r}
+#| label: fig-costs-areaplot
+#| fig-cap: "Total annual costs in the bottom trawl fishery by type"
+#| fig-width: 10
+#| fig-height: 6
+
+econ_df_long |> 
+  filter(str_detect(variable, "Cost|Wage"), value > 0) |> 
+  mutate(variable = str_remove_all(variable, "total"),
+         year = as.factor(year),
+         variable = fct_reorder(variable, value, .fun = mean)) |> 
+  group_by(year) |> 
+  mutate(pct_total = value/sum(value)) |> 
+  ggplot(aes(x = year, y = pct_total, fill = variable, group = variable))+
+  geom_area()+
+  labs(x = "", y = "% of Total Costs", 
+       title = "Trends in Cost Composition", 
+       subtitle = "Annual costs by category (2016 - 2022)",
+       caption = "source: Economic performance data by the EU DCF")+
+  theme_custom()+
+  theme(legend.position = "bottom")+
+  guides(fill = guide_legend(nrow = 2))+
+  paletteer::scale_fill_paletteer_d("ggthemes::wsj_colors6", direction = -1)+
+  scale_y_continuous(expand = c(0, 0),
+                     labels = scales::percent)+
+  scale_x_discrete(expand = c(0, 0.05))
+
+ggsave(file.path(prj_path, "figures", "DCF_costs_areaplot.png"), height = 6, width = 10)
+```
+
+## Profitability
+
+```{r}
+profits_df <- econ_df_wide |> 
+  mutate(revenue = total_value_of_landings_income,
+         total_costs = total_crew_wage + total_energy_cost + total_repair_cost + total_variable_cost + total_non_variable_cost + total_depreciation_cost,
+         profits = revenue - total_costs) |> 
+  select(year, profits, revenue, total_costs, total_crew_wage, total_energy_cost, total_repair_cost, total_variable_cost, total_non_variable_cost ,  total_depreciation_cost)
+
+profits_df |> write_csv(file.path(prj_path, "data/processed/econ_summary.csv"))
+```
+
+Profitability has fluctuated significantly, from a loss of over 146k EUR in 2019 to a peak of nearly 196k EUR in 2021, averaging -12k EUR overall. While some years saw positive returns, rising costs continue to erode profits, highlighting the industry’s volatility (@fig-profits, @fig-econ-perf).
+
+```{r}
+#| label: fig-profits
+#| fig-cap: "Total revenue, costs, and profits in the bottom trawl fishery (2016 - 2022)"
+#| fig-width: 10
+#| fig-height: 6
+#| 
+profits_df |> 
+  select(year, total_costs, profits, revenue) |> 
+  mutate(total_costs = total_costs*-1) |> 
+  pivot_longer(-year, names_to = "variable") |> 
+  mutate(variable = str_to_title(variable),
+         variable = fct_relevel(as.factor(variable),
+                                "Revenue", "Total_costs", "Profits")) |> 
+  ggplot(aes(x = year, y = value, group = variable))+
+  geom_col(aes(fill = variable), position = position_dodge(width = 0.9), width = 0.8) +
+  labs(title = "Annual Economic Performance",
+       subtitle = "Revenue, Costs, and Net profits (2016 - 2022)",
+       x = "",
+       y = "Amount (€)",
+       fill = "",
+       caption ="source: Economic performance data by the EU DCF") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_custom()+
+  theme(legend.position = "bottom")+
+  scale_fill_manual(values = c("#407899", "#D33F49", "#FABC2A"))
+
+ggsave(file.path(prj_path, "figures", "DCF_economic_net_profit_trends.png"), width = 10)
+```
+
+```{r}
+#| label: fig-econ-perf
+#| fig-cap: "Economic perfomance of the bottom trawling fleet (2016 - 2022)"
+#| fig-width: 10
+#| fig-height: 6
+
+profits_df |> 
+  select(-total_costs) |> 
+  mutate(across(matches("cost|wage"), ~ .x * -1)) |> 
+  pivot_longer(-year, names_to = "variable") |> 
+  group_by(variable) |> 
+  summarize(mean_value = mean(value),
+            sd_value = sd(value)) |> 
+  mutate(variable = fct_relevel(as.factor(str_to_sentence(str_replace_all(str_remove_all(variable, "total_"), "_", " "))),
+                                "Revenue", "Energy cost", "Depreciation cost", "Crew wage", "Repair cost",
+                                "Variable cost","Non variable cost", "Profits")) |> 
+  ggplot(aes(x = variable, y = mean_value, group = variable))+
+  geom_col(aes(fill = variable), position = "dodge", show.legend = F)+
+  geom_errorbar(aes(ymin = mean_value - sd_value, ymax = mean_value + sd_value),
+                width = 0.2, color = "black",  show.legend = F)+
+  labs(title = "Economic performance of the bottom trawling ",
+       subtitle = "Average (s.d.) Revenue, Costs, and Net Profits (2016 - 2022)",
+       x = "",
+       y = "Amount (€)",
+       caption = "source: Economic performance data by the EU DCF") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_custom()+
+  scale_fill_manual(values = c("#0075A2",  # Bright Blue
+                               "#B22222",  # Firebrick (Deep Red)
+                               "#DC143C",  # Crimson (Bright Red)
+                               "#FF4500",  # Orange-Red
+                               "#FF6347",  # Tomato (Red-Orange)
+                               "#FF8C00",  # Dark Orange
+                               "#FFA500",  # Orange
+                               "#00FFC5") )+
+  # rotate x axis labels
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave(file.path(prj_path, "figures", "DCF_economic_net_profits_summary_v2.png"), width = 10, height = 7)
+```
+
+To assess the fleet’s long-term economic viability, we conducted a Net Present Value (NPV) analysis based on historical profit trends from 2016 to 2022, projecting financial outcomes over the next 10 years. Using a 5% discount rate, the NPV is -92,911 EUR, indicating sustained financial losses and an unlikely path to profitability. At a 10% discount rate, which accounts for higher financial risk and opportunity costs, the NPV improves slightly but remains negative at -73,934 EUR. These results underscore the structural financial challenges facing the fishery. 
+
+```{r, include = F}
+profits_df |> 
+    select(year, total_costs, profits, revenue) |> 
+  mutate(total_costs = total_costs*-1) |> 
+  pivot_longer(-year, names_to = "variable") |> 
+  group_by(variable) |> 
+  summarize(mean_value = mean(value),
+            sd_value = sd(value)) |> 
+  mutate(variable = fct_relevel(as.factor(str_to_title(variable)),
+                                "Revenue", "Total_costs", "Profits")) |> 
+  ggplot(aes(x = variable, y = mean_value, group = variable))+
+  geom_col(aes(fill = variable), position = "dodge", show.legend = F)+
+  geom_errorbar(aes(ymin = mean_value - sd_value, ymax = mean_value + sd_value),
+                width = 0.2, color = "black")+
+  labs(title = "Revenue, Costs, and Profitability",
+       subtitle = "Mean ± SD values (2016 - 2022)",
+       x = "",
+       y = "Amount (€)",
+       caption = "source: Economic performance data by the EU DCF") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_custom()+
+  scale_fill_manual(values = c("#407899", "#D33F49", "#FABC2A"))
+
+ggsave(file.path(prj_path, "figures", "DCF_economic_net_profit_summary.png"), width = 10)
+```
+
+Looking at profitability per unit of fishing effort provides a more nuanced view of the fishery’s economic performance. While revenue per trip generally increased after 2016 — peaking in 2021 as total effort declined — costs per trip also climbed at a similar pace, spiking in 2019 and 2022 (@fig-efficiency). This dynamic led to profit swings: losses in 2016–2017, a brief positive turn in 2018, a low point in 2019, a rebound in 2020, a high in 2021, and a return to slight losses by 2022 (@fig-efficiency). This pattern suggests that reducing effort alone has not been enough to stabilize profitability, as rising costs continue to offset revenue gains.
+
+```{r}
+#| label: fig-efficiency
+#| fig-cap: "Revenue, total costs and net profits per fishing trip (2016 - 2022)"
+#| fig-width: 10
+#| fig-height: 6
+
+econ_df_long |> 
+  filter(variable %in% c("total Fish Days", "total Sea Days", "total Trips")) |> 
+  select(-unit) |> 
+  pivot_wider(names_from = "variable", values_from = "value") |> 
+  janitor::clean_names() |> 
+  left_join(profits_df) |> 
+  mutate(revenue_per_trip = revenue/total_trips,
+         cost_per_trip = total_costs/total_trips,
+         profits_per_trip = profits/total_trips) |> 
+  select(year, revenue_per_trip, cost_per_trip, profits_per_trip) |> 
+  pivot_longer(-year) |> 
+  ggplot(aes(x = year, y = value, col = name))+
+  geom_point()+
+  geom_line(aes(group = name))+
+  scale_y_continuous(labels = scales::comma) +
+  labs(y = "Amount (€)", x = "", 
+       subtitle = "Annual trends (2016 - 2022)",
+       title = "Revenue, Total Costs, and Profits per trip",
+       caption = "source: Economic performance data by the EU DCF")+
+  theme_custom()+
+  theme(legend.position = c(0.85,0.55))+
+  scale_color_manual(values = c("#23B5D3", "#8A3033", "#9ECE9A"))
+
+ggsave(file.path(prj_path, "figures", "DCF_efficiency_trends.png"), width = 10)
+```

@@ -1,0 +1,91 @@
+---
+title: "Food provision"
+format: 
+  html:
+    theme: lux
+    toc: true
+    toc-location: right
+    page-layout: full
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+```
+
+```{r}
+landings_and_discards <- read_csv(file.path(prj_path, "data/processed/landings_and_discards_summary.csv")) |> 
+  filter(source != "SAU")
+
+fish_protein_factor <- 0.18
+
+chicken_protein_factor <- 0.32
+
+chicken_price <- 5000 # Euro per ton (or € 5 /kg) https://www.selinawamucii.com/insights/prices/cyprus/chicken-meat/
+
+chicken_protein_price <- chicken_price/chicken_protein_factor # Euro per ton of chicken protein
+
+protein_value <- landings_and_discards |> 
+  mutate(protein_landed_tons = landings_tons*fish_protein_factor,
+         protein_value = protein_landed_tons*chicken_protein_price) |> 
+  select(year, protein_landed_tons, protein_value)
+
+avg_protein_value <- mean(protein_value$protein_value)
+avg_protein_landed <- mean(protein_value$protein_landed_tons)
+
+write_csv(protein_value, file.path(prj_path, "data/processed/protein_summary.csv"))
+```
+
+While the economic sustainability of the bottom trawl fishery is under pressure, its importance may extend beyond private financial returns. Beyond direct industry revenue, this fishery may plays an important role in food security and nutrition, supplying valuable protein to local and regional markets. 
+
+One approach to estimate this contribution is to calculate how much it would cost to replace the protein provided by the fishery with an alternative source, such as chicken. With a protein-to-weight ratio of 0.18, the fishery’s average annual landings of 76 tons provide approximately 17 tons of high-quality protein per year. If chicken were used as a substitute—given its higher protein-to-weight ratio of 0.32—it would take 53 tons of chicken to replace the fishery’s protein contribution. At a market price of €5 per kilogram, this substitution would amount to €272,000 per year (@fig-protein).
+
+```{r}
+#| label: fig-protein
+#| fig-cap: "Total value of the protein contribution from bottom trawling (2016 - 2020)"
+#| fig-width: 7
+#| fig-height: 4
+#| 
+protein_value |> 
+  mutate(tmp = "tmp") |> 
+  ggplot(aes(x = year, y = protein_landed_tons))+
+  geom_line(aes(group = tmp), col = "violet")+
+  geom_point(show.legend = F)+
+  labs(x = "", y = "Protein landed (t)" , title = "Protein value",
+       subtitle = "Annual trends in total landed protein and it's replacement value (2016 - 2022)")+
+  theme_custom()+
+  scale_y_continuous(labels = scales::label_comma(),
+                     sec.axis = sec_axis(~.*chicken_protein_price, 
+                                         labels = scales::comma,
+                                         name = "Replacement value (Euro)"))
+```
+
+This estimate underscores the often overlooked economic and nutritional value of the fishery. Beyond its direct market revenues, bottom trawling provides a critical source of protein that would require substantial resources to replace.

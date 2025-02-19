@@ -1,0 +1,65 @@
+---
+title: "Value of discards"
+format: 
+  html:
+    theme: lux
+    toc: true
+    toc-location: right
+    page-layout: full
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+```
+
+```{r}
+# average 25th percentile price across all species groups was $911/mt
+discards_price <- 911
+
+landings_and_discards_summary <- read_csv(file.path(prj_path, 
+                                                    "data/processed/landings_and_discards_summary.csv"))
+
+discarded_value <- landings_and_discards_summary |> 
+  mutate(discarded_value = discards_price*discards_tons) 
+  
+#discarded_value |> 
+ # group_by(source) |>
+  #summarise(total_discarded_value = mean(discarded_value, na.rm = T))
+```
+
+Beyond financial losses and carbon emissions, discards and bycatch represent another significant external cost of bottom trawling. Bycatch refers to non-target species caught unintentionally, while discards include both unwanted bycatch and low-value target species that are thrown back, often with low survival rates [@Kelleher2005]. These unintended catches reduce biodiversity, disrupt marine food webs, and can negatively impact populations of commercially valuable species [@Davies2009].
+
+Despite its ecological significance, valuing the full impact of bycatch on marine ecosystems and associated fisheries remains extremely challenging and is beyond the scope of this analysis. However, to approximate its economic cost, we apply a very conservative market-based approach, valuing discarded fish at the 25th percentile price of species commonly caught in bottom trawl fisheries across Europe, estimated at 911 EUR per ton [@MillageInReview]. While this method does not capture the broader ecological damage caused by discarding, it provides a minimum estimate of the direct economic loss associated with wasteful fishing practices.
+
+Using official discard estimates of 1.67 tons per year, the economic loss is valued at only 2,750 EUR annually. However, if true discards are closer to what Sea Around Us (SAU) suggests—an average of 245 tons per year—then the economic loss would rise to approximately 336,000 EUR per year.
+

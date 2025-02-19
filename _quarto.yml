@@ -1,0 +1,31 @@
+project:
+  type: book
+
+book:
+  title: "Comprehensive Costs and Benefits of Industrial Bottom Trawling in Cyprus"
+  author: "Juan S. Mayorga-Henao"
+  date: "2024"
+  chapters:
+    - index.qmd   # Introduction
+    - 01_fleet_and_effort.qmd
+    - 02_CO2_emissions.qmd
+    - 03_landings_and_discards.qmd
+    - 04_econ_performance.qmd
+    - 05_protein.qmd
+    - 06_employment.qmd
+    - 07_discards.qmd
+    - 08_utility.qmd
+    - 09_buyout.qmd
+    - 10_references.qmd
+
+format:
+  html:
+    toc: true
+    theme: lux  # Customize as needed
+    fig-cap-location: bottom  # Places figure captions below figures
+    number-depth: 1
+    number-equations: true
+    number-sections: true
+
+bibliography: refs.bib
+csl: https://www.zotero.org/styles/harvard-cite-them-right

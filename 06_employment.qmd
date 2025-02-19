@@ -1,0 +1,102 @@
+---
+title: "Employment"
+format: 
+  html:
+    theme: lux
+    toc: true
+    toc-location: right
+    page-layout: full
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 10
+---
+
+```{r setup}
+library(htmltools)
+library(gt)
+library(tidyverse, verbose = F, quietly = T)
+library(ggthemes)
+library(sf)
+library(terra)
+library(tidyterra)
+
+PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+
+prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+
+ps_data_path <- file.path(ps_science_path, "datasets/")
+
+theme_custom <- function(base_size = 12, base_family = "") {
+  theme_clean(base_size = base_size, base_family = base_family) +
+    theme(strip.placement = "outside",         # Place facet strip outside
+          strip.background = element_blank(),  # Remove strip background
+          strip.text = element_text(size = base_size * 1.2), # Larger, bold strip text
+          axis.title = element_text(size = base_size * 1.2),  # Larger, bold axis titles
+          legend.title = element_blank(),
+          plot.title = element_text(face = "bold", size = 16),
+          plot.subtitle = element_text(size = 14),
+          axis.text = element_text(size = 10))}
+```
+
+In addition to its contributions to food security and nutrition, the bottom trawl fishery plays a critical role in employment, supporting livelihoods both at sea and onshore. From fishers and crew members to those involved in processing, distribution, and equipment maintenance, this sector provides direct and indirect jobs that sustain coastal economies.
+
+```{r}
+econ_df <- readxl::read_xlsx(file.path(prj_path,  "data/raw/Economic data for DTS Cyprus waters.xlsx"),
+                             range = "A3:I20") |> 
+  janitor::clean_names()
+
+econ_df_long <- econ_df |> 
+  pivot_longer(-c(acronym, unit)) |> 
+  separate(name, into = c("tmp", "year")) |> 
+  select(-tmp) |> 
+  rename(variable = acronym) |> 
+  mutate(unit = stringr::str_to_upper(unit)) |> 
+  select(year, variable, unit, value)
+
+econ_df_wide <- econ_df_long |> 
+  select(-unit) |> 
+  pivot_wider(names_from = variable, values_from = value) |> 
+  janitor::clean_names() |> 
+  select(-total_other_income, -total_investments)
+
+avg_wage <- 1000*12 # https://in-cyprus.philenews.com/insider/economy/cyprus-annual-salaries-10000-below-eu-average/
+
+employment_df <- econ_df_wide |> 
+  select(total_jobs, year) |>
+  mutate(year = as.numeric(year)) |> 
+  transmute(year, total_jobs, employment_value_euro = total_jobs*avg_wage)
+
+avg_employment_value <- mean(employment_df$employment_value_euro)
+```
+
+
+According to official data, the small Cypriot trawling fleet supported between 12 and 23 jobs annually from 2016 to 2022. Over this period, total employment generally declined from 23 jobs in 2016 to a low of 12 in 2021, before experiencing a slight recovery to 14 jobs in 2022. Using the average annual wage of the agricultural sector (€12,000) as a proxy, the estimated total employment value of the fishery stands at approximately €186,000 per year.
+
+```{r}
+#| label: fig-jobs
+#| fig-cap: "Total value of the employment from bottom trawling (2016 - 2020)"
+#| fig-width: 7
+#| fig-height: 4
+
+employment_df |> 
+  mutate(tmp = "tmp") |> 
+  ggplot(aes(x = year, y = total_jobs))+
+  geom_line(aes(group = tmp), col = "#9ECE9A")+
+  geom_point(show.legend = F)+
+  labs(x = "", y = "Total jobs" , title = "Total Jobs and Employment Value",
+       subtitle = "Annual trends(2016 - 2022)",
+       caption = "source: Economic performance data by the EU DCF")+
+  theme_custom()+
+  scale_y_continuous(labels = scales::label_comma(),
+                     sec.axis = sec_axis(~.*avg_wage, 
+                                         labels = scales::comma,
+                                         name = "Employment value (Euro)"))
+
+ggsave(file.path(prj_path, "figures", "DCF_employment_value.png"), width = 10)
+
+write_csv(employment_df, file.path(prj_path, "data/processed/employment_summary.csv"))
+```
+
