@@ -128,7 +128,7 @@ tmp |>
 ```
 
 
-The public utility of bottom trawling showed even larger negative values, as external costs—primarily CO₂ emissions—far outweighed societal benefits such as employment and protein provision. While the fishery contributed an estimated 214 EUR per year (SD: 39,000 EUR) in protein value and 186,000 EUR per year (SD: 43,000 EUR) in employment, these gains were dwarfed by the climate costs of CO₂ emissions (@fig-utility).
+The public utility of bottom trawling showed even larger negative values, as external costs—primarily CO₂ emissions—far outweighed societal benefits such as employment and protein provision. While the fishery contributed an estimated 214,000 EUR per year (SD: 39,000 EUR) in protein value and 186,000 EUR per year (SD: 43,000 EUR) in employment, these gains were dwarfed by the climate costs of CO₂ emissions (@fig-utility).
 
 Using a conservative social cost of carbon (50 EUR per ton of CO₂), emissions from fuel combustion alone imposed an average annual cost of 34,600 EUR (SD: 11,700 EUR). However, the most significant climate impact came from sediment disturbance, generating an estimated annual carbon cost of 2.5 million EUR (SD: 1.1 million EUR) (@fig-utility). This staggering figure underscores the hidden environmental burden of bottom trawling, reinforcing the need to account for both private profitability and the broader social and ecological costs of this fishing practice.
 

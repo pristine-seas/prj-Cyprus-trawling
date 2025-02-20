@@ -178,7 +178,7 @@ profits_df <- econ_df_wide |>
 profits_df |> write_csv(file.path(prj_path, "data/processed/econ_summary.csv"))
 ```
 
-Profitability has fluctuated significantly, from a loss of over 146k EUR in 2019 to a peak of nearly 196k EUR in 2021, averaging -12k EUR overall. While some years saw positive returns, rising costs continue to erode profits, highlighting the industry’s volatility (@fig-profits, @fig-econ-perf).
+Profitability has fluctuated significantly, from a loss of over 146k EUR in 2019 to a peak profit of nearly 196k EUR in 2021, averaging -12k EUR overall. While some years saw positive returns, rising costs continue to erode profits, highlighting the industry’s volatility (@fig-profits, @fig-econ-perf).
 
 ```{r}
 #| label: fig-profits

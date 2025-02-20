@@ -425,7 +425,7 @@ Official data provides a key validation point for our findings. According to the
 
 ```{r}
 #| label: fig-dcf-fleet
-#| fig.cap: "Trends in fleet's capacity, power, and age between 2016 and 2024"
+#| fig.cap: "Trends in fleet's capacity, power, and age (years) between 2016 and 2024"
 #| fig-width: 7
 #| fig-height: 4
 
