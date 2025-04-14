@@ -20,7 +20,26 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -224,7 +243,7 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Bottom trawling accounts for ~21% of the total annual fishing effort in Cyprus’ Exclusive Economic Zone (EEZ; 0 - 200 n.m.) between 2016 and 2024 <span class="citation" data-cites="gfw2025">[@gfw2025]</span>. On average, bottom trawlers operated for 3,500 hours per year, with a fleet of 2–3 vessels. In comparison, drifting longlines were the dominant gear type, representing about 61% of total fishing effort (10,100 hours per year) with an average fleet of 17 vessels. Vessels with unidentified gear types (hereafter classified as “other fishing”) contributed roughly 14% (2,300 hours per year), while set longlines and set gillnets together accounted for the remaining 5% of total effort (<a href="#fig-effort-by-gear-bar" class="quarto-xref">Figure&nbsp;<span>2.1</span></a>)</p>
+<p>Bottom trawling accounts for ~21% of the total annual fishing effort in Cyprus’ Exclusive Economic Zone (EEZ; 0 - 200 n.m.) between 2016 and 2024 <span class="citation" data-cites="gfw2025">(<a href="10_references.html#ref-gfw2025" role="doc-biblioref">GFW, 2025</a>)</span>. On average, bottom trawlers operated for 3,500 hours per year, with a fleet of 2–3 vessels. In comparison, drifting longlines were the dominant gear type, representing about 61% of total fishing effort (10,100 hours per year) with an average fleet of 17 vessels. Vessels with unidentified gear types (hereafter classified as “other fishing”) contributed roughly 14% (2,300 hours per year), while set longlines and set gillnets together accounted for the remaining 5% of total effort (<a href="#fig-effort-by-gear-bar" class="quarto-xref">Figure&nbsp;<span>2.1</span></a>)</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-effort-by-gear-bar" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -239,7 +258,7 @@ Figure&nbsp;2.1: Average annual fishing effort (hours) by gear type in Cyprus’
 </div>
 </div>
 </div>
-<p>Overall, bottom trawling has occurred across 4,112 km² of Cyprus’ EEZ and 1,865 km² of its territorial waters, meaning that approximately 4.1% of the EEZ and 24% of the territorial waters have been trawled at least once since 2016 <span class="citation" data-cites="gfw2025">[@gfw2025]</span>. This estimate is based on the cumulative area of 0.01º pixels where trawling has been detected. Using this metric, on average, 1,058 km² of the EEZ and 668 km² of the territorial waters are trawled annually (<a href="#fig-effort-by-gear-map" class="quarto-xref">Figure&nbsp;<span>2.2</span></a>).</p>
+<p>Overall, bottom trawling has occurred across 4,112 km² of Cyprus’ EEZ and 1,865 km² of its territorial waters, meaning that approximately 4.1% of the EEZ and 24% of the territorial waters have been trawled at least once since 2016 <span class="citation" data-cites="gfw2025">(<a href="10_references.html#ref-gfw2025" role="doc-biblioref">GFW, 2025</a>)</span>. This estimate is based on the cumulative area of 0.01º pixels where trawling has been detected. Using this metric, on average, 1,058 km² of the EEZ and 668 km² of the territorial waters are trawled annually (<a href="#fig-effort-by-gear-map" class="quarto-xref">Figure&nbsp;<span>2.2</span></a>).</p>
 <p>In comparison, drifting longlines have fished across a much larger area, covering approximately 29,000 km² in total, with an annual footprint ranging from 6,000 to 14,000 km² (6–14% of the EEZ). Meanwhile, vessels classified as “other fishing” initially operated over areas exceeding 2,000 km² but have experienced a significant contraction in recent years. Notably, the spatial patterns of some vessels in the early years—such as Santa Maria and GIA SOU KAIKI MOU AI NIKOLA—resemble those of bottom trawlers, suggesting they may have engaged in trawling at least partially.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -255,7 +274,7 @@ Figure&nbsp;2.2: Average annual fishing effort (hours) by gear type in Cyprus’
 </div>
 </div>
 </div>
-<p>Most bottom trawling activity in Cyprus is concentrated within territorial waters, with 88% of total effort occurring inside the 12 nautical mile (n.m.) boundary (<a href="#fig-effort-in-n-out" class="quarto-xref">Figure&nbsp;<span>2.3</span></a>). In contrast, drifting longlines are primarily deployed beyond this zone, with 75% of their effort taking place outside territorial waters. “Other fishing” vessels also operate largely within the 12 n.m. limit, accounting for 67% of their total effort. Similarly, set longlines and set gillnets allocate approximately 75% of their fishing effort within territorial waters <span class="citation" data-cites="gfw2025">[@gfw2025]</span>. These spatial distributions highlight distinct patterns of gear use, with bottom trawling and passive gears being more coastal, while drifting longlines operate predominantly in offshore areas.</p>
+<p>Most bottom trawling activity in Cyprus is concentrated within territorial waters, with 88% of total effort occurring inside the 12 nautical mile (n.m.) boundary (<a href="#fig-effort-in-n-out" class="quarto-xref">Figure&nbsp;<span>2.3</span></a>). In contrast, drifting longlines are primarily deployed beyond this zone, with 75% of their effort taking place outside territorial waters. “Other fishing” vessels also operate largely within the 12 n.m. limit, accounting for 67% of their total effort. Similarly, set longlines and set gillnets allocate approximately 75% of their fishing effort within territorial waters <span class="citation" data-cites="gfw2025">(<a href="10_references.html#ref-gfw2025" role="doc-biblioref">GFW, 2025</a>)</span>. These spatial distributions highlight distinct patterns of gear use, with bottom trawling and passive gears being more coastal, while drifting longlines operate predominantly in offshore areas.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-effort-in-n-out" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -273,7 +292,7 @@ Figure&nbsp;2.3: Average annual fishing effort (hours) by gear type and location
 </section>
 <section id="the-fleet" class="level2">
 <h2 class="anchored" data-anchor-id="the-fleet">The fleet</h2>
-<p>Since 2016, five distinct bottom trawlers have been detected fishing in Cyprus’ EEZ (GFW, 2025). Among them, My Hendrika II (LOA: 19.5 m, engine power: 292 kW) and Maria Mboumboulina (LOA: 24 m, engine power: 436.4 kW) account for the majority of the fishing effort, contributing 53% and 30%, respectively <span class="citation" data-cites="gfw2025">[@gfw2025]</span>. These two vessels dominate bottom trawling activity in the region, while the remaining effort is distributed among three other trawlers (<a href="#tbl-effort-by-trawler" class="quarto-xref">Table&nbsp;<span>2.1</span></a>). The third most active vessel, Taxiarhis, accounts for 10% of total effort but operates primarily beyond the 12-nautical-mile (n.m.) zone, making it less relevant to this analysis of territorial waters <span class="citation" data-cites="gfw2025">[@gfw2025]</span>.</p>
+<p>Since 2016, five distinct bottom trawlers have been detected fishing in Cyprus’ EEZ (GFW, 2025). Among them, My Hendrika II (LOA: 19.5 m, engine power: 292 kW) and Maria Mboumboulina (LOA: 24 m, engine power: 436.4 kW) account for the majority of the fishing effort, contributing 53% and 30%, respectively <span class="citation" data-cites="gfw2025">(<a href="10_references.html#ref-gfw2025" role="doc-biblioref">GFW, 2025</a>)</span>. These two vessels dominate bottom trawling activity in the region, while the remaining effort is distributed among three other trawlers (<a href="#tbl-effort-by-trawler" class="quarto-xref">Table&nbsp;<span>2.1</span></a>). The third most active vessel, Taxiarhis, accounts for 10% of total effort but operates primarily beyond the 12-nautical-mile (n.m.) zone, making it less relevant to this analysis of territorial waters <span class="citation" data-cites="gfw2025">(<a href="10_references.html#ref-gfw2025" role="doc-biblioref">GFW, 2025</a>)</span>.</p>
 <div class="cell">
 <div id="tbl-effort-by-trawler" class="cell quarto-float anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -282,23 +301,23 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
 </figcaption>
 <div aria-describedby="tbl-effort-by-trawler-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div id="qufunarvty" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#qufunarvty table {
+<div id="ijebjbfkvv" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ijebjbfkvv table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#qufunarvty thead, #qufunarvty tbody, #qufunarvty tfoot, #qufunarvty tr, #qufunarvty td, #qufunarvty th {
+#ijebjbfkvv thead, #ijebjbfkvv tbody, #ijebjbfkvv tfoot, #ijebjbfkvv tr, #ijebjbfkvv td, #ijebjbfkvv th {
   border-style: none;
 }
 
-#qufunarvty p {
+#ijebjbfkvv p {
   margin: 0;
   padding: 0;
 }
 
-#qufunarvty .gt_table {
+#ijebjbfkvv .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -324,12 +343,12 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-left-color: #D3D3D3;
 }
 
-#qufunarvty .gt_caption {
+#ijebjbfkvv .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#qufunarvty .gt_title {
+#ijebjbfkvv .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -341,7 +360,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-bottom-width: 0;
 }
 
-#qufunarvty .gt_subtitle {
+#ijebjbfkvv .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -353,7 +372,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-top-width: 0;
 }
 
-#qufunarvty .gt_heading {
+#ijebjbfkvv .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -365,13 +384,13 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-right-color: #D3D3D3;
 }
 
-#qufunarvty .gt_bottom_border {
+#ijebjbfkvv .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#qufunarvty .gt_col_headings {
+#ijebjbfkvv .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -386,7 +405,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-right-color: #D3D3D3;
 }
 
-#qufunarvty .gt_col_heading {
+#ijebjbfkvv .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -406,7 +425,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   overflow-x: hidden;
 }
 
-#qufunarvty .gt_column_spanner_outer {
+#ijebjbfkvv .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -418,15 +437,15 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   padding-right: 4px;
 }
 
-#qufunarvty .gt_column_spanner_outer:first-child {
+#ijebjbfkvv .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#qufunarvty .gt_column_spanner_outer:last-child {
+#ijebjbfkvv .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#qufunarvty .gt_column_spanner {
+#ijebjbfkvv .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -438,11 +457,11 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   width: 100%;
 }
 
-#qufunarvty .gt_spanner_row {
+#ijebjbfkvv .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#qufunarvty .gt_group_heading {
+#ijebjbfkvv .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -468,7 +487,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   text-align: left;
 }
 
-#qufunarvty .gt_empty_group_heading {
+#ijebjbfkvv .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -483,15 +502,15 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   vertical-align: middle;
 }
 
-#qufunarvty .gt_from_md > :first-child {
+#ijebjbfkvv .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#qufunarvty .gt_from_md > :last-child {
+#ijebjbfkvv .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#qufunarvty .gt_row {
+#ijebjbfkvv .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -510,7 +529,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   overflow-x: hidden;
 }
 
-#qufunarvty .gt_stub {
+#ijebjbfkvv .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -523,7 +542,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   padding-right: 5px;
 }
 
-#qufunarvty .gt_stub_row_group {
+#ijebjbfkvv .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -537,15 +556,15 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   vertical-align: top;
 }
 
-#qufunarvty .gt_row_group_first td {
+#ijebjbfkvv .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#qufunarvty .gt_row_group_first th {
+#ijebjbfkvv .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#qufunarvty .gt_summary_row {
+#ijebjbfkvv .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -555,16 +574,16 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   padding-right: 5px;
 }
 
-#qufunarvty .gt_first_summary_row {
+#ijebjbfkvv .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#qufunarvty .gt_first_summary_row.thick {
+#ijebjbfkvv .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#qufunarvty .gt_last_summary_row {
+#ijebjbfkvv .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -574,7 +593,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-bottom-color: #D3D3D3;
 }
 
-#qufunarvty .gt_grand_summary_row {
+#ijebjbfkvv .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -584,7 +603,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   padding-right: 5px;
 }
 
-#qufunarvty .gt_first_grand_summary_row {
+#ijebjbfkvv .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -594,7 +613,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-top-color: #D3D3D3;
 }
 
-#qufunarvty .gt_last_grand_summary_row_top {
+#ijebjbfkvv .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -604,11 +623,11 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-bottom-color: #D3D3D3;
 }
 
-#qufunarvty .gt_striped {
+#ijebjbfkvv .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#qufunarvty .gt_table_body {
+#ijebjbfkvv .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -617,7 +636,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-bottom-color: #D3D3D3;
 }
 
-#qufunarvty .gt_footnotes {
+#ijebjbfkvv .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -631,7 +650,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-right-color: #D3D3D3;
 }
 
-#qufunarvty .gt_footnote {
+#ijebjbfkvv .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -640,7 +659,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   padding-right: 5px;
 }
 
-#qufunarvty .gt_sourcenotes {
+#ijebjbfkvv .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -654,7 +673,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   border-right-color: #D3D3D3;
 }
 
-#qufunarvty .gt_sourcenote {
+#ijebjbfkvv .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -662,72 +681,72 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
   padding-right: 5px;
 }
 
-#qufunarvty .gt_left {
+#ijebjbfkvv .gt_left {
   text-align: left;
 }
 
-#qufunarvty .gt_center {
+#ijebjbfkvv .gt_center {
   text-align: center;
 }
 
-#qufunarvty .gt_right {
+#ijebjbfkvv .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#qufunarvty .gt_font_normal {
+#ijebjbfkvv .gt_font_normal {
   font-weight: normal;
 }
 
-#qufunarvty .gt_font_bold {
+#ijebjbfkvv .gt_font_bold {
   font-weight: bold;
 }
 
-#qufunarvty .gt_font_italic {
+#ijebjbfkvv .gt_font_italic {
   font-style: italic;
 }
 
-#qufunarvty .gt_super {
+#ijebjbfkvv .gt_super {
   font-size: 65%;
 }
 
-#qufunarvty .gt_footnote_marks {
+#ijebjbfkvv .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#qufunarvty .gt_asterisk {
+#ijebjbfkvv .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#qufunarvty .gt_indent_1 {
+#ijebjbfkvv .gt_indent_1 {
   text-indent: 5px;
 }
 
-#qufunarvty .gt_indent_2 {
+#ijebjbfkvv .gt_indent_2 {
   text-indent: 10px;
 }
 
-#qufunarvty .gt_indent_3 {
+#ijebjbfkvv .gt_indent_3 {
   text-indent: 15px;
 }
 
-#qufunarvty .gt_indent_4 {
+#ijebjbfkvv .gt_indent_4 {
   text-indent: 20px;
 }
 
-#qufunarvty .gt_indent_5 {
+#ijebjbfkvv .gt_indent_5 {
   text-indent: 25px;
 }
 
-#qufunarvty .katex-display {
+#ijebjbfkvv .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#qufunarvty div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ijebjbfkvv div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -814,7 +833,7 @@ Table&nbsp;2.1: Key metrics for detected trawlers in Cyprus’ EEZ
 </section>
 <section id="trawling-effort" class="level2">
 <h2 class="anchored" data-anchor-id="trawling-effort">Trawling Effort</h2>
-<p>Between 2016 and 2024, bottom trawling activity in Cyprus’ EEZ experienced notable fluctuations. From 2016 to 2018, annual effort remained relatively stable, averaging around 2,100 hours <span class="citation" data-cites="gfw2025">[@gfw2025]</span>. In 2020–2021, effort increased significantly, exceeding 5,000 hours despite fewer vessels operating during this period. This peak was followed by a gradual decline, with effort stabilizing at approximately 3,000 hours by 2024 (<a href="#fig-trawling-by-vessel-yr-in-n-out" class="quarto-xref">Figure&nbsp;<span>2.4</span></a>). These changes may reflect shifts in fleet composition, regulatory measures, or economic factors influencing fishing operations.</p>
+<p>Between 2016 and 2024, bottom trawling activity in Cyprus’ EEZ experienced notable fluctuations. From 2016 to 2018, annual effort remained relatively stable, averaging around 2,100 hours <span class="citation" data-cites="gfw2025">(<a href="10_references.html#ref-gfw2025" role="doc-biblioref">GFW, 2025</a>)</span>. In 2020–2021, effort increased significantly, exceeding 5,000 hours despite fewer vessels operating during this period. This peak was followed by a gradual decline, with effort stabilizing at approximately 3,000 hours by 2024 (<a href="#fig-trawling-by-vessel-yr-in-n-out" class="quarto-xref">Figure&nbsp;<span>2.4</span></a>). These changes may reflect shifts in fleet composition, regulatory measures, or economic factors influencing fishing operations.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-trawling-by-vessel-yr-in-n-out" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -865,7 +884,7 @@ Figure&nbsp;2.6: Fishing effort between 2016 and 2024
 </section>
 <section id="swept-area" class="level2">
 <h2 class="anchored" data-anchor-id="swept-area">Swept Area</h2>
-<p>The footprint values presented above provide a broad measure of the fleet’s operational range, but they do not fully capture the extent of seafloor disturbance. The actual impact—referred to here as the swept area—can be either smaller or larger than the detected footprint due to two key opposing factors: (1) the relatively narrow width of trawl nets (40–60 m) compared to the coarse resolution of footprint mapping (~1 km² per pixel) and (2) the repeated passes over the same fishing grounds multiple times per year <span class="citation" data-cites="sala2021">[@sala2021]</span>. Consequently, in areas of low-intensity trawling, the cumulative swept area may be smaller than the detected footprint, while in heavily trawled zones, it can exceed it. This pattern is evident in Cyprus’ territorial waters, where an average of 668.4 km² (8.8%) is trawled annually, yet the average annual cumulative swept area reaches 897.7 km² (11.8%), highlighting the concentrated nature of bottom trawling in these areas (<a href="#fig-swept-area" class="quarto-xref">Figure&nbsp;<span>2.7</span></a>).</p>
+<p>The footprint values presented above provide a broad measure of the fleet’s operational range, but they do not fully capture the extent of seafloor disturbance. The actual impact—referred to here as the swept area—can be either smaller or larger than the detected footprint due to two key opposing factors: (1) the relatively narrow width of trawl nets (40–60 m) compared to the coarse resolution of footprint mapping (~1 km² per pixel) and (2) the repeated passes over the same fishing grounds multiple times per year <span class="citation" data-cites="sala2021">(<a href="10_references.html#ref-sala2021" role="doc-biblioref">Sala <em>et al.</em>, 2021</a>)</span>. Consequently, in areas of low-intensity trawling, the cumulative swept area may be smaller than the detected footprint, while in heavily trawled zones, it can exceed it. This pattern is evident in Cyprus’ territorial waters, where an average of 668.4 km² (8.8%) is trawled annually, yet the average annual cumulative swept area reaches 897.7 km² (11.8%), highlighting the concentrated nature of bottom trawling in these areas (<a href="#fig-swept-area" class="quarto-xref">Figure&nbsp;<span>2.7</span></a>).</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-swept-area" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -908,7 +927,7 @@ Figure&nbsp;2.9: Annual swept area (km²) by vessel in Cyprus’ territorial wat
 </div>
 </div>
 </div>
-<p>Understanding the spatial intensity of bottom trawling is important for assessing its ecological impact. By comparing the swept area to the size of each pixel, we estimate both the fraction of a cell fished and the frequency of trawling within it. This distinction allows us to differentiate between areas that experience occasional fishing and those subjected to repeated disturbance, which has significant implications for seafloor integrity and benthic ecosystem health <span class="citation" data-cites="sala2021">[@sala2021]</span>.</p>
+<p>Understanding the spatial intensity of bottom trawling is important for assessing its ecological impact. By comparing the swept area to the size of each pixel, we estimate both the fraction of a cell fished and the frequency of trawling within it. This distinction allows us to differentiate between areas that experience occasional fishing and those subjected to repeated disturbance, which has significant implications for seafloor integrity and benthic ecosystem health <span class="citation" data-cites="sala2021">(<a href="10_references.html#ref-sala2021" role="doc-biblioref">Sala <em>et al.</em>, 2021</a>)</span>.</p>
 <p>During the study period, the annual average swept area ratio (SAR) within territorial waters was 0.48 (median = 0.012), though the distribution was highly right-skewed (<a href="#fig-sar-hist" class="quarto-xref">Figure&nbsp;<span>2.10</span></a>). This indicates that while most areas experienced minimal disturbance, some were repeatedly trawled, concentrating fishing pressure in specific regions.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -928,8 +947,8 @@ Figure&nbsp;2.10: Distribution of average Swept Area Ratios (SAR) in Cyprus’ t
 </section>
 <section id="swept-volume" class="level2">
 <h2 class="anchored" data-anchor-id="swept-volume">Swept Volume</h2>
-<p>To further assess the physical impact of bottom trawling, we estimate the trawled volume by incorporating the penetration depth of the gear. While swept area provides a two-dimensional measure of disturbance, trawled volume accounts for the vertical extent of sediment disruption. For otter trawls, which are commonly used in demersal fisheries, the average penetration depth is 2.4 cm <span class="citation" data-cites="sala2021">[@sala2021]</span>. By multiplying the swept area by this depth, we quantify the total volume of sediment disturbed by trawling activity.</p>
-<p>To contextualize this disturbance, we also estimate the swept volume ratio (SVR) for each pixel by comparing the trawled volume to the total sediment volume within that cell. We define the volume of each pixel using a sediment depth of 1 meter, as this represents the depth of the carbon layer <span class="citation" data-cites="atwood2020">[@atwood2020]</span>. The SVR provides a direct estimate of the fraction of sedimentary carbon in each cell that is disturbed by trawling, offering a more precise measure of its impact on carbon stocks. The average SVR of fished areas in Cyprus’ territorial waters was 0.011 (median = 0.0003), indicating that a small fraction of the seabed’s carbon layer is directly affected by trawling activity (<a href="#fig-svr-hist" class="quarto-xref">Figure&nbsp;<span>2.11</span></a>).</p>
+<p>To further assess the physical impact of bottom trawling, we estimate the trawled volume by incorporating the penetration depth of the gear. While swept area provides a two-dimensional measure of disturbance, trawled volume accounts for the vertical extent of sediment disruption. For otter trawls, which are commonly used in demersal fisheries, the average penetration depth is 2.4 cm <span class="citation" data-cites="sala2021">(<a href="10_references.html#ref-sala2021" role="doc-biblioref">Sala <em>et al.</em>, 2021</a>)</span>. By multiplying the swept area by this depth, we quantify the total volume of sediment disturbed by trawling activity.</p>
+<p>To contextualize this disturbance, we also estimate the swept volume ratio (SVR) for each pixel by comparing the trawled volume to the total sediment volume within that cell. We define the volume of each pixel using a sediment depth of 1 meter, as this represents the depth of the carbon layer <span class="citation" data-cites="atwood2020">(<a href="10_references.html#ref-atwood2020" role="doc-biblioref">Atwood <em>et al.</em>, 2020</a>)</span>. The SVR provides a direct estimate of the fraction of sedimentary carbon in each cell that is disturbed by trawling, offering a more precise measure of its impact on carbon stocks. The average SVR of fished areas in Cyprus’ territorial waters was 0.011 (median = 0.0003), indicating that a small fraction of the seabed’s carbon layer is directly affected by trawling activity (<a href="#fig-svr-hist" class="quarto-xref">Figure&nbsp;<span>2.11</span></a>).</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-svr-hist" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -956,23 +975,23 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
 </figcaption>
 <div aria-describedby="tbl-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div id="zgvobckhho" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#zgvobckhho table {
+<div id="upmdlpwbms" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#upmdlpwbms table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#zgvobckhho thead, #zgvobckhho tbody, #zgvobckhho tfoot, #zgvobckhho tr, #zgvobckhho td, #zgvobckhho th {
+#upmdlpwbms thead, #upmdlpwbms tbody, #upmdlpwbms tfoot, #upmdlpwbms tr, #upmdlpwbms td, #upmdlpwbms th {
   border-style: none;
 }
 
-#zgvobckhho p {
+#upmdlpwbms p {
   margin: 0;
   padding: 0;
 }
 
-#zgvobckhho .gt_table {
+#upmdlpwbms .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -998,12 +1017,12 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-left-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_caption {
+#upmdlpwbms .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#zgvobckhho .gt_title {
+#upmdlpwbms .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1015,7 +1034,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-bottom-width: 0;
 }
 
-#zgvobckhho .gt_subtitle {
+#upmdlpwbms .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1027,7 +1046,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-top-width: 0;
 }
 
-#zgvobckhho .gt_heading {
+#upmdlpwbms .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1039,13 +1058,13 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-right-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_bottom_border {
+#upmdlpwbms .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_col_headings {
+#upmdlpwbms .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1060,7 +1079,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-right-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_col_heading {
+#upmdlpwbms .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1080,7 +1099,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   overflow-x: hidden;
 }
 
-#zgvobckhho .gt_column_spanner_outer {
+#upmdlpwbms .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1092,15 +1111,15 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   padding-right: 4px;
 }
 
-#zgvobckhho .gt_column_spanner_outer:first-child {
+#upmdlpwbms .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#zgvobckhho .gt_column_spanner_outer:last-child {
+#upmdlpwbms .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#zgvobckhho .gt_column_spanner {
+#upmdlpwbms .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1112,11 +1131,11 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   width: 100%;
 }
 
-#zgvobckhho .gt_spanner_row {
+#upmdlpwbms .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#zgvobckhho .gt_group_heading {
+#upmdlpwbms .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1142,7 +1161,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   text-align: left;
 }
 
-#zgvobckhho .gt_empty_group_heading {
+#upmdlpwbms .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1157,15 +1176,15 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   vertical-align: middle;
 }
 
-#zgvobckhho .gt_from_md > :first-child {
+#upmdlpwbms .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#zgvobckhho .gt_from_md > :last-child {
+#upmdlpwbms .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#zgvobckhho .gt_row {
+#upmdlpwbms .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1184,7 +1203,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   overflow-x: hidden;
 }
 
-#zgvobckhho .gt_stub {
+#upmdlpwbms .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1197,7 +1216,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   padding-right: 5px;
 }
 
-#zgvobckhho .gt_stub_row_group {
+#upmdlpwbms .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1211,15 +1230,15 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   vertical-align: top;
 }
 
-#zgvobckhho .gt_row_group_first td {
+#upmdlpwbms .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#zgvobckhho .gt_row_group_first th {
+#upmdlpwbms .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#zgvobckhho .gt_summary_row {
+#upmdlpwbms .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1229,16 +1248,16 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   padding-right: 5px;
 }
 
-#zgvobckhho .gt_first_summary_row {
+#upmdlpwbms .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_first_summary_row.thick {
+#upmdlpwbms .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#zgvobckhho .gt_last_summary_row {
+#upmdlpwbms .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1248,7 +1267,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-bottom-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_grand_summary_row {
+#upmdlpwbms .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1258,7 +1277,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   padding-right: 5px;
 }
 
-#zgvobckhho .gt_first_grand_summary_row {
+#upmdlpwbms .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1268,7 +1287,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-top-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_last_grand_summary_row_top {
+#upmdlpwbms .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1278,11 +1297,11 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-bottom-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_striped {
+#upmdlpwbms .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#zgvobckhho .gt_table_body {
+#upmdlpwbms .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1291,7 +1310,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-bottom-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_footnotes {
+#upmdlpwbms .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1305,7 +1324,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-right-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_footnote {
+#upmdlpwbms .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1314,7 +1333,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   padding-right: 5px;
 }
 
-#zgvobckhho .gt_sourcenotes {
+#upmdlpwbms .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1328,7 +1347,7 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   border-right-color: #D3D3D3;
 }
 
-#zgvobckhho .gt_sourcenote {
+#upmdlpwbms .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1336,72 +1355,72 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
   padding-right: 5px;
 }
 
-#zgvobckhho .gt_left {
+#upmdlpwbms .gt_left {
   text-align: left;
 }
 
-#zgvobckhho .gt_center {
+#upmdlpwbms .gt_center {
   text-align: center;
 }
 
-#zgvobckhho .gt_right {
+#upmdlpwbms .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#zgvobckhho .gt_font_normal {
+#upmdlpwbms .gt_font_normal {
   font-weight: normal;
 }
 
-#zgvobckhho .gt_font_bold {
+#upmdlpwbms .gt_font_bold {
   font-weight: bold;
 }
 
-#zgvobckhho .gt_font_italic {
+#upmdlpwbms .gt_font_italic {
   font-style: italic;
 }
 
-#zgvobckhho .gt_super {
+#upmdlpwbms .gt_super {
   font-size: 65%;
 }
 
-#zgvobckhho .gt_footnote_marks {
+#upmdlpwbms .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#zgvobckhho .gt_asterisk {
+#upmdlpwbms .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#zgvobckhho .gt_indent_1 {
+#upmdlpwbms .gt_indent_1 {
   text-indent: 5px;
 }
 
-#zgvobckhho .gt_indent_2 {
+#upmdlpwbms .gt_indent_2 {
   text-indent: 10px;
 }
 
-#zgvobckhho .gt_indent_3 {
+#upmdlpwbms .gt_indent_3 {
   text-indent: 15px;
 }
 
-#zgvobckhho .gt_indent_4 {
+#upmdlpwbms .gt_indent_4 {
   text-indent: 20px;
 }
 
-#zgvobckhho .gt_indent_5 {
+#upmdlpwbms .gt_indent_5 {
   text-indent: 25px;
 }
 
-#zgvobckhho .katex-display {
+#upmdlpwbms .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#zgvobckhho div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#upmdlpwbms div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1579,6 +1598,17 @@ Table&nbsp;2.2: Summary of key metrics for bottom trawling activity in Cyprus’
 </div>
 
 
+<div id="refs" class="references csl-bib-body" role="list" style="display: none">
+<div id="ref-atwood2020" class="csl-entry" role="listitem">
+Atwood, T.B. <em>et al.</em> (2020) <span>“Global <span>Patterns</span> in <span>Marine Sediment Carbon Stocks</span>,”</span> <em>Frontiers in Marine Science</em>, 7, p. 165. Available at: <a href="https://doi.org/10.3389/fmars.2020.00165">https://doi.org/10.3389/fmars.2020.00165</a>.
+</div>
+<div id="ref-gfw2025" class="csl-entry" role="listitem">
+GFW (2025) <span>“Global fishing watch data.”</span> Available at: <a href="https://globalfishingwatch.org/data">https://globalfishingwatch.org/data</a>.
+</div>
+<div id="ref-sala2021" class="csl-entry" role="listitem">
+Sala, E. <em>et al.</em> (2021) <span>“Protecting the global ocean for biodiversity, food and climate,”</span> <em>Nature</em>, 592(7854, 7854), pp. 397–402. Available at: <a href="https://doi.org/10.1038/s41586-021-03371-z">https://doi.org/10.1038/s41586-021-03371-z</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->

@@ -20,7 +20,26 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -218,7 +237,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="landings" class="level2">
 <h2 class="anchored" data-anchor-id="landings">Landings</h2>
 <p>Total fish landings in the bottom trawl fishery have declined significantly since their peak in 2006, when they exceeded 200 tons. In recent years, landings have remained below 50 tons, with moderate year-to-year fluctuations. Between 2016 and 2022, annual landings averaged 76 tons (SD ≈ 14), reaching a low of 50 tons in 2020 before showing partial recovery. Overall, the data indicate a sustained decline in landings compared to earlier peak levels (<a href="#fig-landings-ts" class="quarto-xref">Figure&nbsp;<span>4.1</span></a>).</p>
-<p>However, reconstructed catch estimates suggest that total removals from the bottom trawl fishery are substantially higher than official landings data indicate. The reconstructed average annual catch for the entire fleet was estimated at 384 tons—more than five times the reported landings for the same period <span class="citation" data-cites="SeaAroundUs">[@SeaAroundUs]</span>. This discrepancy highlights potential under-reporting or other factors affecting the accuracy of official landings records.</p>
+<p>However, reconstructed catch estimates suggest that total removals from the bottom trawl fishery are substantially higher than official landings data indicate. The reconstructed average annual catch for the entire fleet was estimated at 384 tons—more than five times the reported landings for the same period <span class="citation" data-cites="SeaAroundUs">(<a href="10_references.html#ref-SeaAroundUs" role="doc-biblioref">Pauly and Zeller, 2025</a>)</span>. This discrepancy highlights potential under-reporting or other factors affecting the accuracy of official landings records.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-landings-ts" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -251,7 +270,7 @@ Figure&nbsp;4.2: Total annual fish catch by taxa in the bottom trawl fishery sin
 </section>
 <section id="discards" class="level2">
 <h2 class="anchored" data-anchor-id="discards">Discards</h2>
-<p>On average, the total annual discards since 2016 across all species amount to approximately 1.67 tons per year, reflecting the overall scale of non-retained catch in the bottom trawl fishery (fig-discards-ts, <a href="#fig-discards-by-sp-ts" class="quarto-xref">Figure&nbsp;<span>4.4</span></a>). However, reconstructed data suggests this value can be as high as 245 tons per year (<a href="#fig-discards-ts" class="quarto-xref">Figure&nbsp;<span>4.3</span></a>) <span class="citation" data-cites="SeaAroundUs">[@SeaAroundUs]</span>. This discrepancy highlights the substantial difference between official and reconstructed catch data, indicating that discards may be a significant component of the fishery that is not fully captured in official records.</p>
+<p>On average, the total annual discards since 2016 across all species amount to approximately 1.67 tons per year, reflecting the overall scale of non-retained catch in the bottom trawl fishery (fig-discards-ts, <a href="#fig-discards-by-sp-ts" class="quarto-xref">Figure&nbsp;<span>4.4</span></a>). However, reconstructed data suggests this value can be as high as 245 tons per year (<a href="#fig-discards-ts" class="quarto-xref">Figure&nbsp;<span>4.3</span></a>) <span class="citation" data-cites="SeaAroundUs">(<a href="10_references.html#ref-SeaAroundUs" role="doc-biblioref">Pauly and Zeller, 2025</a>)</span>. This discrepancy highlights the substantial difference between official and reconstructed catch data, indicating that discards may be a significant component of the fishery that is not fully captured in official records.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-discards-ts" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -283,6 +302,11 @@ Figure&nbsp;4.4: Total annual discards by taxa in the bottom trawl fishery since
 </div>
 
 
+<div id="refs" class="references csl-bib-body" role="list" style="display: none">
+<div id="ref-SeaAroundUs" class="csl-entry" role="listitem">
+Pauly, D. and Zeller, D. (2025) <span>“Sea around us: Global fisheries and ecosystem data.”</span> Available at: <a href="https://www.seaaroundus.org">https://www.seaaroundus.org</a>.
+</div>
+</div>
 </section>
 
 </main> <!-- /main -->
