@@ -34,6 +34,3 @@ format:
     number-depth: 1
     number-equations: true
     number-sections: true
-
-bibliography: refs.bib
-csl: https://www.zotero.org/styles/harvard-cite-them-right

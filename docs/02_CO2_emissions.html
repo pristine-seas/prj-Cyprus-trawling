@@ -20,26 +20,7 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-}
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
-}
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
-}
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -260,7 +241,7 @@ Figure&nbsp;3.1: Total Fuel Consumption (Liters) and CO₂ Emissions from Intern
 <h2 class="anchored" data-anchor-id="sediment-disturbance">Sediment disturbance</h2>
 <section id="carbon-stocks" class="level3">
 <h3 class="anchored" data-anchor-id="carbon-stocks">Carbon Stocks</h3>
-<p>To estimate the total carbon stored in the top meter of marine sediment within Cyprus’ territorial waters, we used the global map of sedimentary carbon stocks produced by <span class="citation" data-cites="atwood2020">Atwood <em>et al.</em> (<a href="10_references.html#ref-atwood2020" role="doc-biblioref">2020</a>)</span>. Across the Exclusive Economic Zone (EEZ), the total carbon stock is 710 Mt C, while within the 12 n.m. zone, it is estimated at 129 Mt C (<a href="#fig-c-map" class="quarto-xref">Figure&nbsp;<span>3.2</span></a>). Within territorial waters, the average carbon density is approximately 8,800 t C/km².</p>
+<p>To estimate the total carbon stored in the top meter of marine sediment within Cyprus’ territorial waters, we used the global map of sedimentary carbon stocks produced by <span class="citation" data-cites="atwood2020">@atwood2020</span>. Across the Exclusive Economic Zone (EEZ), the total carbon stock is 711 Mt C, while within the 12 n.m. zone, it is estimated at 68 Mt C (<a href="#fig-c-map" class="quarto-xref">Figure&nbsp;<span>3.2</span></a>). Within territorial waters, the average carbon density is approximately 6897 t C/km².</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-c-map" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -278,8 +259,8 @@ Figure&nbsp;3.2: Carbon stock (t C) in Cyprus’ territorial waters
 </section>
 <section id="emissions" class="level3">
 <h3 class="anchored" data-anchor-id="emissions">Emissions</h3>
-<p>We follow the methodology and parameters of <span class="citation" data-cites="sala2021">Sala <em>et al.</em> (<a href="10_references.html#ref-sala2021" role="doc-biblioref">2021</a>)</span> to estimate CO₂ emissions resulting from sediment disturbance caused by bottom trawling. For Cyprus’s territorial waters the relevant parameter values are the proportion of labile carbon (0.7), the proportion of resettled carbon (0.87), and the decay rate of labile carbon (12.3) for the Mediterranean Sea. Given that bottom trawling has occurred in Cyprus for over a decade, we also apply a depletion factor of 0.27 to account for the depletion of the pristine carbon pool <span class="citation" data-cites="atwood2024">Sala <em>et al.</em> (<a href="10_references.html#ref-sala2021" role="doc-biblioref">2021</a>)</span>.</p>
-<p>Our findings indicate that bottom trawling in Cyprus’ territorial waters disturbs and remineralizes approximately 114,000 tons of CO₂ annually into the water columns. Of this, 50% (57,000 tons of CO₂ on average) is estimated to be exchanged with the atmosphere within a decade contributing to long-term carbon emissions.</p>
+<p>We follow the methodology and parameters of <span class="citation" data-cites="sala2021">@sala2021</span> to estimate CO₂ emissions resulting from sediment disturbance caused by bottom trawling. For Cyprus’s territorial waters the relevant parameter values are the proportion of labile carbon (0.7), the proportion of resettled carbon (0.87), and the decay rate of labile carbon (12.3) for the Mediterranean Sea. Given that bottom trawling has occurred in Cyprus for over a decade, we also apply a depletion factor of 0.27 to account for the depletion of the pristine carbon pool <span class="citation" data-cites="atwood2024">[@atwood2024, @sala2021]</span>.</p>
+<p>Our findings indicate that bottom trawling in Cyprus’ territorial waters disturbs and remineralizes approximately 9.9526^{4} tons of CO₂ annually into the water columns. Of this, ~55% ( 5.4739^{4}tons of CO₂ on average) is estimated to be exchanged with the atmosphere within a decade contributing to long-term carbon emissions.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-co2-map" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -294,7 +275,7 @@ Figure&nbsp;3.3: CO2 emissions in Cyprus’ territorial waters
 </div>
 </div>
 </div>
-<p>To put this into perspective, Cyprus’s total domestic greenhouse gas (GHG) emissions in 2022 were approximately 8.7 million tonnes of CO₂ equivalent (MtCO₂-eq), with the energy sector accounting for 34% (2.9 MtCO₂-eq) and the agriculture sector contributing around 0.52 MtCO₂-eq (6%) <span class="citation" data-cites="EC2023">(<a href="10_references.html#ref-EC2023" role="doc-biblioref">European Commission, 2023</a>)</span>. Emissions from sediment disturbance due to bottom trawling in Cyprus’ territorial waters represent 0.65% of the country’s total GHG emissions and 11% of those from the agriculture sector.</p>
+<p>To put this into perspective, Cyprus’s total domestic greenhouse gas (GHG) emissions in 2022 were approximately 8.7 million tonnes of CO₂ equivalent (MtCO₂-eq), with the energy sector accounting for 34% (2.9 MtCO₂-eq) and the agriculture sector contributing around 0.52 MtCO₂-eq (6%) <span class="citation" data-cites="EC2023">[@EC2023]</span>. Emissions from sediment disturbance due to bottom trawling in Cyprus’ territorial waters represent 0.6% of the country’s total GHG emissions and 10% of those from the agriculture sector.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-co2-emissions-per-year" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -325,20 +306,6 @@ Figure&nbsp;3.5: CO2 emissions per year in Cyprus’ territorial waters
 </div>
 
 
-<div id="refs" class="references csl-bib-body" role="list" style="display: none">
-<div id="ref-atwood2020" class="csl-entry" role="listitem">
-Atwood, T.B. <em>et al.</em> (2020) <span>“Global <span>Patterns</span> in <span>Marine Sediment Carbon Stocks</span>,”</span> <em>Frontiers in Marine Science</em>, 7, p. 165. Available at: <a href="https://doi.org/10.3389/fmars.2020.00165">https://doi.org/10.3389/fmars.2020.00165</a>.
-</div>
-<div id="ref-atwood2024" class="csl-entry" role="listitem">
-Atwood, T.B. <em>et al.</em> (2024) <span>“Atmospheric <span>CO2</span> emissions and ocean acidification from bottom-trawling,”</span> <em>Frontiers in Marine Science</em>, 10. Available at: <a href="https://www.frontiersin.org/articles/10.3389/fmars.2023.1125137">https://www.frontiersin.org/articles/10.3389/fmars.2023.1125137</a> (Accessed: January 19, 2024).
-</div>
-<div id="ref-EC2023" class="csl-entry" role="listitem">
-European Commission (2023) <span>“Cyprus climate action progress report 2023.”</span> Available at: <a href="https://climate.ec.europa.eu/document/download/f54bf20f-b0c6-48a0-8db9-1ec3873b87e8_en?filename=cy_2023_factsheet_en.pdf">https://climate.ec.europa.eu/document/download/f54bf20f-b0c6-48a0-8db9-1ec3873b87e8_en?filename=cy_2023_factsheet_en.pdf</a>.
-</div>
-<div id="ref-sala2021" class="csl-entry" role="listitem">
-Sala, E. <em>et al.</em> (2021) <span>“Protecting the global ocean for biodiversity, food and climate,”</span> <em>Nature</em>, 592(7854, 7854), pp. 397–402. Available at: <a href="https://doi.org/10.1038/s41586-021-03371-z">https://doi.org/10.1038/s41586-021-03371-z</a>.
-</div>
-</div>
 </section>
 </section>
 

@@ -24,11 +24,13 @@ library(sf)
 library(terra)
 library(tidyterra)
 
-PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+ggthemr::ggthemr("light")
 
-prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+ps_paths <- PristineSeasR::get_sci_drive_paths()
 
-ps_data_path <- file.path(ps_science_path, "datasets/")
+prj_path <- file.path(ps_paths$projects,  "prj-cyprus-trawlers")
+
+ps_data_path <- ps_paths$datasets
 
 theme_custom <- function(base_size = 12, base_family = "") {
   theme_clean(base_size = base_size, base_family = base_family) +
@@ -42,17 +44,15 @@ theme_custom <- function(base_size = 12, base_family = "") {
           axis.text = element_text(size = 10))}
 
 # Load 
-EEZs <- vect(file.path(ps_science_path, 
-                             "projects/prj-MPAs-to-30x30/data/processed", 
-                             "world_EEZs.gpkg")) 
 
-land <- vect(file.path(ps_science_path, 
-                             "projects/prj-MPAs-to-30x30/data/processed", 
-                             "land.gpkg"))
+EEZs <- vect(file.path(ps_paths$projects, 
+                       "prj-MPAs-to-30x30/data/processed/world_EEZs.gpkg")) 
 
-territorial_seas <- vect(file.path(ps_science_path, 
-                              "projects/prj-MPAs-to-30x30/data/processed", 
-                              "world_territorial_waters.gpkg"))
+land <- vect(file.path(ps_paths$projects, 
+                       "prj-MPAs-to-30x30/data/processed/land.gpkg"))
+
+territorial_seas <- vect(file.path(ps_paths$projects, 
+                              "prj-MPAs-to-30x30/data/processed/world_territorial_waters.gpkg"))
 
 CYP_eez <- subset(EEZs, 
                   EEZs$mrgid == "8376") |> 
@@ -70,6 +70,15 @@ CYP_land <- land |>
   project("EPSG:4326") |> 
   terra::intersect(ext(CYP_12nm))
 
+northern_cyprus <- vect(file.path(prj_path, 
+                                  "data/raw/northern_cyprus.gpkg")) |> 
+  project("EPSG:4326") |> 
+  terra::as.polygons()
+
+# Remove northern cyprus from the 12nm zone
+
+CYP_12nm <- CYP_12nm |> 
+  erase(northern_cyprus) 
 
 calculate_cell_area <- function(lat, res = 0.01) {
   
@@ -148,8 +157,8 @@ ggsave(file.path(prj_path, "figures", "DCF_fuel_emissions.png"), width = 10)
 ### Carbon Stocks
 
 ```{r}
-carbon_raster <- rast(file.path(ps_science_path, 
-                                "projects/UCSB-legacy-projects/trawling-co2/data", "02_processed_data",  "carbon_raster.tif")) 
+carbon_raster <- rast(file.path(ps_paths$projects, 
+                                "UCSB-legacy-projects/trawling-co2/data/02_processed_data/carbon_raster.tif")) 
 
 carbon_eez <- carbon_raster |> 
   terra::crop(ext(CYP_eez)) |> 
@@ -166,7 +175,7 @@ filled_raster <- focal(carbon_eez, w = focal_window, fun = mean, na.policy = "on
 carbon_eez_filled <- cover(carbon_eez, filled_raster)|> 
   terra::mask(CYP_eez)
 
-c_in_eez <- terra::global(carbon_eez_filled, sum, na.rm = T)/10^6 # 710 million tons of C in territorial waters
+c_in_eez <- pull(round(terra::global(carbon_eez_filled, sum, na.rm = T)/10^6)) # 710 million tons of C in territorial waters
 
 # 12nm 
 
@@ -174,10 +183,12 @@ carbon_12nm <- carbon_eez_filled |>
   terra::crop(ext(CYP_12nm)) |> 
   terra::mask(CYP_12nm) 
 
-c_in_12nm <- terra::global(carbon_12nm, sum, na.rm = T)/10^6 # 129 million tons of C in territorial waters
+c_in_12nm <- pull(round(terra::global(carbon_12nm, sum, na.rm = T)/10^6)) # 129 million tons of C in territorial waters
+
+mean_c <- pull(round(terra::global(carbon_12nm, mean, na.rm = T)))
 ```
 
-To estimate the total carbon stored in the top meter of marine sediment within Cyprus’ territorial waters, we used the global map of sedimentary carbon stocks produced by @atwood2020. Across the Exclusive Economic Zone (EEZ), the total carbon stock is 710 Mt C, while within the 12 n.m. zone, it is estimated at 129 Mt C (@fig-c-map). Within territorial waters, the average carbon density is approximately 8,800 t C/km².
+To estimate the total carbon stored in the top meter of marine sediment within Cyprus’ territorial waters, we used the global map of sedimentary carbon stocks produced by @atwood2020. Across the Exclusive Economic Zone (EEZ), the total carbon stock is `r c_in_eez` Mt C, while within the 12 n.m. zone, it is estimated at `r c_in_12nm` Mt C (@fig-c-map). Within territorial waters, the average carbon density is approximately `r mean_c` t C/km².
 
 ```{r}
 #| label: fig-c-map
@@ -187,8 +198,9 @@ To estimate the total carbon stored in the top meter of marine sediment within C
 #| 
 ggplot()+
   tidyterra::geom_spatraster(data = carbon_12nm, na.rm = T)+
-  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed")+
-  geom_spatvector(data = CYP_land, fill = "#8B94A3", col = "#8B94A3")+
+  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed", linewidth = .35)+
+  geom_spatvector(data = CYP_land, fill = "#646E68", col = "#646E68")+
+  geom_spatvector(data = northern_cyprus, fill = "transparent", col = "#000F08", linetype = "dashed")+
   #geom_raster(data = avg_svr_per_pixel, aes(lon_bin, lat_bin), alpha = 0.5, fill = "black")+ 
   theme(plot.title = element_text(face = "bold", size = 16, hjust = 0),
         plot.title.position = "plot",  
@@ -199,7 +211,9 @@ ggplot()+
         legend.position = "right",
         strip.background = element_blank(),  # Remove strip background
         strip.text = element_text(size = 12 * 1.2, face = "bold"))+
-  paletteer::scale_fill_paletteer_c("pals::parula", direction = 1, trans = "log10"
+  paletteer::scale_fill_paletteer_c("pals::parula", 
+                                    breaks = c(6000, 8000, 10000,12000),
+                                    direction = 1, trans = "log10"
                                     ,labels = scales::comma, na.value = "transparent")+
   labs(fill = "t Carbon",
        title = "Sedimentary Carbon Stock in Cyprus' Territorial Waters",
@@ -210,10 +224,6 @@ ggsave(file.path(prj_path, "figures/carbon_in_12nm_filled.png"), width = 12, hei
 ```
 
 ### Emissions 
-
-We follow the methodology and parameters of @sala2021 to estimate CO₂ emissions resulting from sediment disturbance caused by bottom trawling. For Cyprus's territorial waters the relevant parameter values are the proportion of labile carbon (0.7), the proportion of resettled carbon (0.87), and the decay rate of labile carbon (12.3) for the Mediterranean Sea. Given that bottom trawling has occurred in Cyprus for over a decade, we also apply a depletion factor of 0.27 to account for the depletion of the pristine carbon pool [@atwood2024, @sala2021].
-
-Our findings indicate that bottom trawling in Cyprus’ territorial waters disturbs and remineralizes approximately 114,000 tons of CO₂ annually into the water columns. Of this, 50% (57,000 tons of CO₂ on average) is estimated to be exchanged with the atmosphere within a decade contributing to long-term carbon emissions.
 
 ```{r}
 svr_stack <- rast(file.path(prj_path, "data/processed/svr_stack.tif"))
@@ -238,11 +248,15 @@ names(co2_remineralized) <- str_replace(names(co2_remineralized), "SVR_", "tCO2_
 total_co2_remineralized <- terra::global(co2_remineralized, fun = "sum", na.rm = T) |> 
   rename(total_tons_co2 = sum)
 
-emissions <- co2_remineralized*0.5 # 50% of the CO@ remineralized makes it to the atmosphere (Atwood et al, 2022)
+emissions <- co2_remineralized*0.55 # 50% of the CO@ remineralized makes it to the atmosphere (Atwood et al, 2022)
 
 total_emissions <- terra::global(emissions, fun = "sum", na.rm = T) |> 
-  rename(total_tCO2 = sum)
+  rename(total_tCO2 = sum) 
 ```
+
+We follow the methodology and parameters of @sala2021 to estimate CO₂ emissions resulting from sediment disturbance caused by bottom trawling. For Cyprus's territorial waters the relevant parameter values are the proportion of labile carbon (0.7), the proportion of resettled carbon (0.87), and the decay rate of labile carbon (12.3) for the Mediterranean Sea. Given that bottom trawling has occurred in Cyprus for over a decade, we also apply a depletion factor of 0.27 to account for the depletion of the pristine carbon pool [@atwood2024, @sala2021].
+
+Our findings indicate that bottom trawling in Cyprus’ territorial waters disturbs and remineralizes approximately `r round(mean(total_co2_remineralized$total_tons_co2))` tons of CO₂ annually into the water columns. Of this, ~55% ( `r round(mean(total_emissions$total_tCO2))`tons of CO₂ on average) is estimated to be exchanged with the atmosphere within a decade contributing to long-term carbon emissions.
 
 ```{r}
 #| label: fig-co2-map
@@ -252,8 +266,9 @@ total_emissions <- terra::global(emissions, fun = "sum", na.rm = T) |>
 
 ggplot()+
   geom_spatraster(data = mean(emissions))+
-  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed")+
-  geom_spatvector(data = CYP_land, fill = "#8B94A3", col = "#8B94A3")+
+  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed", linewidth = .35)+
+  geom_spatvector(data = CYP_land, fill = "#646E68", col = "#646E68")+
+  geom_spatvector(data = northern_cyprus, fill = "transparent", col = "#000F08", linetype = "dashed")+
   #geom_raster(data = avg_svr_per_pixel, aes(lon_bin, lat_bin), alpha = 0.5, fill = "black")+ 
   theme(plot.title = element_text(face = "bold", size = 16, hjust = 0),
         plot.title.position = "plot",  
@@ -275,7 +290,7 @@ labs(fill = expression("tCO"[2]),
 ggsave(file.path(prj_path, "figures/tCO2_avg_map.png"), width = 12, height = 8)
 ```
 
-To put this into perspective, Cyprus’s total domestic greenhouse gas (GHG) emissions in 2022 were approximately 8.7 million tonnes of CO₂ equivalent (MtCO₂-eq), with the energy sector accounting for 34% (2.9 MtCO₂-eq) and the agriculture sector contributing around 0.52 MtCO₂-eq (6%) [@EC2023]. Emissions from sediment disturbance due to bottom trawling in Cyprus’ territorial waters represent 0.65% of the country’s total GHG emissions and 11% of those from the agriculture sector.
+To put this into perspective, Cyprus’s total domestic greenhouse gas (GHG) emissions in 2022 were approximately 8.7 million tonnes of CO₂ equivalent (MtCO₂-eq), with the energy sector accounting for 34% (2.9 MtCO₂-eq) and the agriculture sector contributing around 0.52 MtCO₂-eq (6%) [@EC2023]. Emissions from sediment disturbance due to bottom trawling in Cyprus’ territorial waters represent 0.6% of the country’s total GHG emissions and 10% of those from the agriculture sector.
 
 ```{r}
 #| label: fig-co2-emissions-per-year
@@ -318,8 +333,9 @@ names(tmp) <- str_remove_all(names(tmp), "tCO2_")
 ggplot()+
   geom_spatraster(data = tmp)+
   facet_wrap(~lyr)+
-  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed")+
-  geom_spatvector(data = CYP_land, fill = "#8B94A3", col = "#8B94A3")+
+  geom_spatvector(data = CYP_12nm, fill = "transparent", col = "#48A9A6", linetype = "dashed", linewidth = .35)+
+  geom_spatvector(data = CYP_land, fill = "#646E68", col = "#646E68")+
+  geom_spatvector(data = northern_cyprus, fill = "transparent", col = "#000F08", linetype = "dashed")+
   #geom_raster(data = avg_svr_per_pixel, aes(lon_bin, lat_bin), alpha = 0.5, fill = "black")+ 
   theme(plot.title = element_text(face = "bold", size = 16, hjust = 0),
         plot.title.position = "plot",  

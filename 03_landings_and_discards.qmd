@@ -24,11 +24,13 @@ library(sf)
 library(terra)
 library(tidyterra)
 
-PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+ggthemr::ggthemr("light")
 
-prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+ps_paths <- PristineSeasR::get_sci_drive_paths()
 
-ps_data_path <- file.path(ps_science_path, "datasets/")
+prj_path <- file.path(ps_paths$projects,  "prj-cyprus-trawlers")
+
+ps_data_path <- ps_paths$datasets
 
 theme_custom <- function(base_size = 12, base_family = "") {
   theme_clean(base_size = base_size, base_family = base_family) +
@@ -66,6 +68,7 @@ landings_and_discards <- mbs_data |>
             discards_tons = sum(discards, na.rm = T))
 
 ## SAU data 
+
 sau_data <- read_csv(file.path(prj_path, "data/raw/SAU EEZ 198 v50/SAU EEZ 198 v50-1.csv")) |> 
   filter(gear_type == "bottom trawl", year > 2005)
 
@@ -117,6 +120,7 @@ avgs_df <- landings_and_discards |>
 Total fish landings in the bottom trawl fishery have declined significantly since their peak in 2006, when they exceeded 200 tons. In recent years, landings have remained below 50 tons, with moderate year-to-year fluctuations. Between 2016 and 2022, annual landings averaged 76 tons (SD ≈ 14), reaching a low of 50 tons in 2020 before showing partial recovery. Overall, the data indicate a sustained decline in landings compared to earlier peak levels (@fig-landings-ts).
 
 However, reconstructed catch estimates suggest that total removals from the bottom trawl fishery are substantially higher than official landings data indicate. The reconstructed average annual catch for the entire fleet was estimated at 384 tons—more than five times the reported landings for the same period [@SeaAroundUs]. This discrepancy highlights potential under-reporting or other factors affecting the accuracy of official landings records.
+
  
 ```{r}
 #| label: fig-landings-ts
@@ -154,14 +158,16 @@ landing_by_year_and_species <- landings_and_discards |>
   select(year, sp_code = species, common_name, scientific_name, landings_tons, discards_tons)
 
 avg_landing_by_species <- landing_by_year_and_species |> 
+  filter(year > 2015) |> 
   group_by(sp_code, scientific_name, common_name) |> 
-  summarize(landings_tons = mean(landings_tons)) |> 
-  arrange(desc(landings_tons)) 
+  summarize(total_landings_tons = sum(landings_tons),
+            landings_tons = mean(landings_tons),
+            total_discards_tons= sum(discards_tons),
+            discards_tons = mean(discards_tons)) |> 
+  arrange(desc(total_landings_tons)) 
 ```
 
-Based on official data, the bottom trawl fishery is dominated by Picarei (*Spicara smaris*), which accounts for over 52 tons annually, far surpassing any other species. A secondary group contributes moderate landings, including Red mullet (*Mullus barbatus*) and Bogue (*Boops boops*), both around 11.5 tons, followed by European squid (*Loligo vulgaris*, 5.8 tons), Common Pandora (*Pagellus erythrinus*, 4.9 tons), and Axillary seabream (*Pagellus acarne*, 4.0 tons)(@fig-landings-by-sp-ts). 
-
-Smaller contributions come from Common octopus (*Octopus vulgaris*, 2.4 tons) and Striped red mullet (*Mullus surmuletus*, 2.1 tons). Most other species land less than 1 ton per year, with European hake (*Merluccius merluccius*, 0.97 tons) and Giant red shrimp (*Aristaeomorpha foliacea*, 0.18 tons) among the more notable. Overall, Picarei dominates the fishery, while a handful of other species contribute moderate or minor but steady landings (@fig-landings-by-sp-ts).
+Based on official data, the bottom trawl fishery is dominated by Picarei (*Spicara smaris*), which accounts for over 31 tons annually since 2016, far surpassing any other species. A secondary group contributes moderate landings, including Bogue (*Boops boops*) and Red mullet (*Mullus barbatus*) with 12 and 10 tons repectively, followed by Common Pandora (*Pagellus erythrinus*, 6.8 tons), European squid (*Loligo vulgaris*, 5.2 tons), and Axillary seabream (*Pagellus acarne*, 5.0 tons)(@fig-landings-by-sp-ts). Smaller contributions come from European hake (*Merluccius merluccius*, 1.47 tons) and Striped red mullet (*Mullus surmuletus*, 1.46 tons). Overall, Picarei dominates the fishery, while a handful of other species contribute moderate or minor but steady landings (@fig-landings-by-sp-ts).
 
 ```{r}
 #| label: fig-landings-by-sp-ts
@@ -214,7 +220,7 @@ annual_total_landings_and_discards |>
                      labels = c("MBS" = "Official", "SAU" = "Reconstructed"))
 ```
 
-Picarei (*Spicara smaris*) dominates discards in the bottom trawl fishery, with a total of 34.6 tons across all years, averaging 2.5 tons per year—far exceeding any other species. This aligns with its prominence in landings, suggesting it is both highly targeted and frequently discarded, likely due to market preferences or selectivity issues. Common Pandora (*Pagellus erythrinus*) follows at a distant second, with 5.3 tons total and 0.4 tons annually, while Bogue (*Boops boops*), Spotted flounder (*Citharus linguatula*), and Red mullet (*Mullus barbatus*) contribute between 1.2 and 2.4 tons total, averaging 0.1 to 0.3 tons per year. A notable shift is seen in Spotted flounder, which had relatively high discard levels before 2018, peaking at 1 ton in 2016, but are almost absent afterward. This suggests potential shift in stock dynamics affecting its presence in catches (@fig-discards-by-sp-ts). 
+Common Pandora (*Pagellus erythrinus*) dominates discards, with 2.8 tons recorded since 2016—averaging 0.4 tons per year—far exceeding any other species. Spotted flounder (*Citharus linguatula*) ranks second, with 1.7 tons discarded (0.2 tons annually), but displays a marked temporal shift: it was heavily discarded prior to 2018 (peaking at 1 ton in 2016) and disappears from the discard record thereafter. Notably, it is also entirely absent from landing data. These patterns suggest a potential change in stock availability or catchability (@fig-discards-by-sp-ts). Picarei (*Spicara smaris*), Bogue (*Boops boops*), and Sargo breams (*Diplodus spp.*) follow with 1.6, 1.2, and 1 ton discarded, respectively—each contributing less than 0.2 tons per year on average.
 
 ```{r}
 #| label: fig-discards-by-sp-ts
@@ -223,8 +229,10 @@ Picarei (*Spicara smaris*) dominates discards in the bottom trawl fishery, with 
 #| fig-height: 4
 
 discards_by_species <- landing_by_year_and_species |> 
+  filter(year > 2015) |> 
   group_by(sp_code, scientific_name, common_name) |> 
-  summarize(discards_tons = mean(discards_tons)) |> 
+  summarize(total_discards_tons = sum(discards_tons),
+            discards_tons = mean(discards_tons)) |> 
   arrange(desc(discards_tons)) 
 
 top_10_discards <- discards_by_species |> 
@@ -243,6 +251,7 @@ landing_by_year_and_species |>
   scale_x_continuous(breaks = seq(2006, 2022))+
   guides(fill = guide_legend(ncol = 2))+
   paletteer::scale_fill_paletteer_d("basetheme::brutal")
+
 
 ggsave(file.path(prj_path, "figures", "discards_by_species_post_2015.png"), height = 8, width = 12)
 ```

@@ -23,11 +23,14 @@ library(sf)
 library(terra)
 library(tidyterra)
 
-PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
 
-prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+ggthemr::ggthemr("light")
 
-ps_data_path <- file.path(ps_science_path, "datasets/")
+ps_paths <- PristineSeasR::get_sci_drive_paths()
+
+prj_path <- file.path(ps_paths$projects,  "prj-cyprus-trawlers")
+
+ps_data_path <- ps_paths$datasets
 
 theme_custom <- function(base_size = 12, base_family = "") {
   theme_clean(base_size = base_size, base_family = base_family) +
@@ -71,7 +74,7 @@ One approach to estimate this contribution is to calculate how much it would cos
 ```{r}
 #| label: fig-protein
 #| fig-cap: "Total value of the protein contribution from bottom trawling (2016 - 2020)"
-#| fig-width: 7
+#| fig-width: 8
 #| fig-height: 4
 #| 
 protein_value |> 

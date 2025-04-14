@@ -23,11 +23,13 @@ library(sf)
 library(terra)
 library(tidyterra)
 
-PristineSeasR::set_ps_paths(email = "marine.data.science@ngs.org")
+ggthemr::ggthemr("light")
 
-prj_path <- file.path(ps_science_path, "projects", "prj-cyprus-trawlers")
+ps_paths <- PristineSeasR::get_sci_drive_paths()
 
-ps_data_path <- file.path(ps_science_path, "datasets/")
+prj_path <- file.path(ps_paths$projects,  "prj-cyprus-trawlers")
+
+ps_data_path <- ps_paths$datasets
 
 theme_custom <- function(base_size = 12, base_family = "") {
   theme_clean(base_size = base_size, base_family = base_family) +
